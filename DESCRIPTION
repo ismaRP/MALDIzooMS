@@ -1,11 +1,16 @@
 Package: MALDIutils
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Manage big sets of ZooMS MALDI data
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: c(person("Ismael", "Rodriguez", role=c("aut", "cre"),
+        email="ismael@palaeome.org",
+        comment=c(ORCID="0000-0001-5313-9709")))
+Maintainer: Ismael Rodriguez <ismael@palaeome.org>
+Description: Manage big datasets of ZooMS MALDI data, change format,
+    and collect from platemap. Reads and processes data in chunks.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.1.1
+Imports: 
+    MALDIquantForeign

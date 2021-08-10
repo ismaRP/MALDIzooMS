@@ -15,4 +15,6 @@ RoxygenNote: 7.1.1
 Imports: 
     MALDIquantForeign,
     MALDIquant,
-    readr
+    readr,
+    data.table,
+    tibble

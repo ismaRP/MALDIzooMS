@@ -2,3 +2,13 @@
 
 export(change_format)
 export(change_format_chunks)
+export(importTable)
+export(importTsv)
+export(import_file.MzMl)
+export(rw_chunk)
+importFrom(MALDIquant,createMassSpectrum)
+importFrom(MALDIquantForeign,exportMzMl)
+importFrom(MALDIquantForeign,exportTab)
+importFrom(MALDIquantForeign,importMzMl)
+importFrom(MALDIquantForeign,importTab)
+importFrom(readr,read_tsv)

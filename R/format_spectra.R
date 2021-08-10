@@ -1,56 +1,5 @@
 
 
-importTsv = function(f) {
-  s = read_tsv(f, col_names=c('mass', 'intensity'), col_types='dd')
-  s = createMassSpectrum(
-    mass=s[[1]],
-    intensity=s[[2]],
-    metaData=list(file=f)
-  )
-  return(s)
-}
-
-
-importTable = function(f){
-  s = read.table(f)
-  s = createMassSpectrum(
-    mass=s[[1]],
-    intensity=s[[2]],
-    metaData=list(file=f)
-  )
-  return(s)
-}
-
-import_file.MzMl = function(f) {
-  s = importMzMl(f)
-  return(s[[1]])
-}
-
-
-chunks = function(x,n) split(x, cut(seq_along(x), n, labels = FALSE))
-
-check_empty = function(x, indir){
-  f = file.path(inndir, x)
-  t = readLines(f,1)
-  if (length(t)>0) {
-    return(TRUE)
-  } else {
-    return(FALSE)
-  }
-}
-
-
-rw_chunk = function(x, indir, read_f, outdir, write_f, fmt) {
-  infiles = file.path(indir, x)
-  l = lapply(infiles, read_f)
-  # Change extension
-  # x = sub(pattern="\\.[[:alnum:]]+?$|(/|\\\\)+[^.\\\\/]+$",
-  #         replacement="", x=x)
-  # x = paste0(x, '.', fmt)
-  # outfiles = file.path(opt$outdir, x)
-  write_f(l, path=outdir)
-}
-
 
 #' Read MALDI data in a given format in chunks and export in a different one
 #'
@@ -61,6 +10,7 @@ rw_chunk = function(x, indir, read_f, outdir, write_f, fmt) {
 #' @param chunks
 #'
 #' @return
+#' @importFrom MALDIquantForeign importTab importMzMl exportTab exportMzMl
 #' @export
 #'
 #' @examples
@@ -87,7 +37,7 @@ change_format_chunks = function(indir, readf, outdir, writef, chunks = 80){
          },
          "mzml" = {
            fmt = ".mzML"
-           write_f = exportImzMl
+           write_f = exportMzMl
          }
   )
   spectra_f = list.files(indir)
@@ -119,6 +69,7 @@ change_format_chunks = function(indir, readf, outdir, writef, chunks = 80){
 #' @param writef
 #'
 #' @return
+#' @importFrom MALDIquantForeign importTab importMzMl exportTab exportMzMl
 #' @export
 #'
 #' @examples
@@ -149,10 +100,100 @@ change_format = function(indir, readf, outdir, writef){
          },
          "mzml" = {
            fmt = ".mzML"
-           write_f = exportImzMl
+           write_f = exportMzMl
          }
   )
   l = read_f(path=indir)
   write_f(l, path=outdir)
 
+}
+
+
+#' Title
+#'
+#' @param f
+#'
+#' @return
+#' @importFrom MALDIquant createMassSpectrum
+#' @importFrom readr read_tsv
+#' @export
+#'
+importTsv = function(f) {
+  s = read_tsv(f, col_names=c('mass', 'intensity'), col_types='dd')
+  s = createMassSpectrum(
+    mass=s[[1]],
+    intensity=s[[2]],
+    metaData=list(file=f)
+  )
+  return(s)
+}
+
+#' Title
+#'
+#' @param f
+#'
+#' @return
+#' @importFrom MALDIquant createMassSpectrum
+#' @export
+#'
+importTable = function(f){
+  s = read.table(f)
+  s = createMassSpectrum(
+    mass=s[[1]],
+    intensity=s[[2]],
+    metaData=list(file=f)
+  )
+  return(s)
+}
+
+#' Title
+#'
+#' @param f
+#'
+#' @return
+#' @importFrom MALDIquantForeign importMzMl
+#' @export
+#'
+#' @examples
+import_file.MzMl = function(f) {
+  s = importMzMl(f)
+  return(s[[1]])
+}
+
+
+chunks = function(x,n) split(x, cut(seq_along(x), n, labels = FALSE))
+
+check_empty = function(x, indir){
+  f = file.path(indir, x)
+  t = readLines(f,1)
+  if (length(t)>0) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+
+#' Title
+#'
+#' @param x
+#' @param indir
+#' @param read_f
+#' @param outdir
+#' @param write_f
+#' @param fmt
+#'
+#' @return
+#' @export
+#'
+#' @examples
+rw_chunk = function(x, indir, read_f, outdir, write_f, fmt) {
+  infiles = file.path(indir, x)
+  l = lapply(infiles, read_f)
+  # Change extension
+  # x = sub(pattern="\\.[[:alnum:]]+?$|(/|\\\\)+[^.\\\\/]+$",
+  #         replacement="", x=x)
+  # x = paste0(x, '.', fmt)
+  # outfiles = file.path(opt$outdir, x)
+  write_f(l, path=outdir)
 }

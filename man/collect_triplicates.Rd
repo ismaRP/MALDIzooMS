@@ -4,7 +4,16 @@
 \alias{collect_triplicates}
 \title{Title}
 \usage{
-collect_triplicates(file, basepath, readf, outpath, writef, keep_dupl)
+collect_triplicates(
+  file,
+  basepath,
+  ext,
+  readf,
+  outpath,
+  writef,
+  keep_dupl,
+  keep_incomplete_tripl
+)
 }
 \arguments{
 \item{basepath}{}

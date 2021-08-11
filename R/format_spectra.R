@@ -1,6 +1,3 @@
-
-
-
 #' Read MALDI data in a given format in chunks and export in a different one
 #'
 #' @param indir
@@ -10,11 +7,10 @@
 #' @param chunks
 #'
 #' @return
-#' @importFrom MALDIquantForeign importTab importMzMl exportTab exportMzMl
 #' @export
 #'
 #' @examples
-change_format_chunks = function(indir, readf, outdir, writef, chunks = 80){
+change_format_chunks = function(indir, readf, outdir, writef, nchunks = 80){
   switch(EXPR=readf,
          "fread" = {
            read_f = importTsv
@@ -46,8 +42,8 @@ change_format_chunks = function(indir, readf, outdir, writef, chunks = 80){
   filter_empty = unlist(filter_empty)
   spectra_f = spectra_f[filter_empty]
 
-  spectra_chunks = chunks(spectra_f, chunks)
-
+  if (nchunks > 1) spectra_chunks = chunks(spectra_f, chunks)
+  else spectra_chunks = list(spectra_f)
 
 
   invissible(lapply(
@@ -55,6 +51,7 @@ change_format_chunks = function(indir, readf, outdir, writef, chunks = 80){
     rw_f,
     indir, read_f, outdir, fmt
   ))
+
 }
 
 
@@ -68,6 +65,7 @@ change_format_chunks = function(indir, readf, outdir, writef, chunks = 80){
 #' @param fmt
 #'
 #' @return
+#' @importFrom MALDIquantForeign importMzMl
 #' @export
 #'
 #' @examples
@@ -101,54 +99,6 @@ rw_chunk_tsv = function(x, indir, read_f, outdir, fmt) {
 
   exportTsv(l, path=outfiles)
 }
-
-#' Read MALDI data in a given format at once and export in a different one
-#'
-#' @param indir
-#' @param readf
-#' @param outdir
-#' @param writef
-#'
-#' @return
-#' @importFrom MALDIquantForeign importTab importMzMl exportTab exportMzMl
-#' @export
-#'
-#' @examples
-change_format = function(indir, readf, outdir, writef){
-
-  switch(EXPR=readf,
-         "readr" = {
-           fmt = ".tab"
-           read_f = importTab
-         },
-         "table" = {
-           fmt = ".tab"
-           read_f = importTab
-         },
-         "mzML" = {
-           fmt = ".mzML"
-           read_f = importMzMl
-         }
-  )
-  switch(EXPR=writef,
-         "tab" = {
-           fmt = ".tab"
-           write_f = exportTab
-         },
-         "txt" = {
-           fmt = ".tab"
-           write_f = exportTab
-         },
-         "mzML" = {
-           fmt = ".mzML"
-           write_f = exportMzMl
-         }
-  )
-  l = read_f(path=indir)
-  write_f(l, path=outdir)
-
-}
-
 
 ##### IMPORT FUNCTIONS READ FILE BY FILE
 
@@ -207,9 +157,19 @@ import_file.MzMl = function(f) {
 
 
 ##### EXPORT FUNCTIONS WRITE LISTS OF FILES
+#' Title
+#'
+#' @param l
+#' @param path
+#'
+#' @return
+#' @importFrom data.table fwrite
+#' @export
+#'
+#' @examples
 exportTsv = function(l, path) {
   mapply(
-    function(x, f) fwrite(x, f),
+    function(x, f) fwrite(list(x@mass, x@instensity), f),
     l, path
   )
 }

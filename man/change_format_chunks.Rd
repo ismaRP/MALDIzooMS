@@ -4,7 +4,7 @@
 \alias{change_format_chunks}
 \title{Read MALDI data in a given format in chunks and export in a different one}
 \usage{
-change_format_chunks(indir, readf, outdir, writef, chunks = 80)
+change_format_chunks(indir, readf, outdir, writef, nchunks = 80)
 }
 \arguments{
 \item{chunks}{}

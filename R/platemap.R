@@ -2,6 +2,10 @@
 #'
 #' @param platemap
 #' @param basepath
+#' @param ext
+#' @param outpath
+#' @param keep_dupl
+#' @param keep_incomplete_tripl
 #'
 #' @return
 #' @importFrom dplyr arrange filter mutate group_by
@@ -10,7 +14,7 @@
 #' @export
 #'
 #' @examples
-collect_triplicates = function(file, basepath, ext, readf, outpath, writef,
+collect_triplicates = function(platemap, basepath, ext, outpath,
                                keep_dupl, keep_incomplete_tripl) {
 
   platemap = platemap %>%
@@ -35,23 +39,25 @@ collect_triplicates = function(file, basepath, ext, readf, outpath, writef,
   # Gather platemap
   platemap = platemap %>%
     gather("spot", "coordinates", c(spot1, spot2, spot3)) %>%
-    arrange(folder, subfolder, quire) %>%
+    arrange(folder, subfolder, sample_name) %>%
     mutate(replicate = substr(spot, 5, 5)) %>%
-    mutate(inpath = file.path(path, folder, paste0(subfolder, '.', ext),
+    mutate(inpath = file.path(basepath, folder, paste0(subfolder, '.', ext),
                               paste0(basename, '_', spot, '.', ext))) %>%
     mutate(exists = file.exists(inpath))
 
-
+  print(platemap)
+  return()
   if (!keep_incomplete_tripl) {
-    platemap = platemap %>% group_by(sample_mame) %>%
+    platemap = platemap %>% group_by(sample_name) %>%
       mutate(complete = all(exists)) %>%
       filter(complete)
   } else {
     platemap = platemap %>% filter(exists)
   }
   platemap = platemap %>%
-    mutate(outpath = file.path(outpath, paste0(sample_name, "_", replicate)))
-
+    mutate(outpath = file.path(outpath,
+                               paste0(sample_name, "_", replicate, ".", ext)))
+  print(platemap)
   file.copy(platemap$inpath, platemap$outpath)
 
 }

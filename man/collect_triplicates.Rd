@@ -5,18 +5,16 @@
 \title{Title}
 \usage{
 collect_triplicates(
-  file,
+  platemap,
   basepath,
   ext,
-  readf,
   outpath,
-  writef,
   keep_dupl,
   keep_incomplete_tripl
 )
 }
 \arguments{
-\item{basepath}{}
+\item{keep_incomplete_tripl}{}
 }
 \value{
 

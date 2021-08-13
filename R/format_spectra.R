@@ -3,8 +3,8 @@
 #' @param indir
 #' @param readf
 #' @param outdir
+#' @param nchunks
 #' @param writef
-#' @param chunks
 #'
 #' @return
 #' @export
@@ -46,7 +46,7 @@ change_format_chunks = function(indir, readf, outdir, writef, nchunks = 80){
   else spectra_chunks = list(spectra_f)
 
 
-  invissible(lapply(
+  invisible(lapply(
     spectra_chunks,
     rw_f,
     indir, read_f, outdir, fmt
@@ -61,11 +61,10 @@ change_format_chunks = function(indir, readf, outdir, writef, nchunks = 80){
 #' @param indir
 #' @param read_f
 #' @param outdir
-#' @param write_f
 #' @param fmt
 #'
 #' @return
-#' @importFrom MALDIquantForeign importMzMl
+#' @importFrom MALDIquantForeign exportMzMl
 #' @export
 #'
 #' @examples
@@ -81,7 +80,6 @@ rw_chunk_mzml = function(x, indir, read_f, outdir, fmt) {
 #' @param indir
 #' @param read_f
 #' @param outdir
-#' @param write_f
 #' @param fmt
 #'
 #' @return
@@ -129,6 +127,7 @@ importTsv = function(f) {
 #'
 #' @return
 #' @importFrom MALDIquant createMassSpectrum
+#' @importFrom utils read.table
 #' @export
 #'
 importTable = function(f){

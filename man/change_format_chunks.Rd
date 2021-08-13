@@ -7,7 +7,7 @@
 change_format_chunks(indir, readf, outdir, writef, nchunks = 80)
 }
 \arguments{
-\item{chunks}{}
+\item{writef}{}
 }
 \value{
 

@@ -8,13 +8,13 @@ collect_triplicates(
   platemap,
   basepath,
   ext,
-  outpath,
+  outfolder,
   keep_dupl,
   keep_incomplete_tripl
 )
 }
 \arguments{
-\item{keep_incomplete_tripl}{}
+\item{outfolder}{}
 }
 \value{
 

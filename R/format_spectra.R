@@ -46,7 +46,6 @@ change_format_chunks = function(indir, readf, outdir, writef, nchunks = 80){
   if (nchunks > 1) spectra_chunks = chunks(spectra_f, nchunks)
   else spectra_chunks = list(spectra_f)
 
-
   invisible(lapply(
     spectra_chunks,
     rw_f,
@@ -173,7 +172,6 @@ exportTsv = function(l, path) {
     l, path
   )
 }
-
 
 
 

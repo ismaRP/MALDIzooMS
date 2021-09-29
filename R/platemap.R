@@ -58,6 +58,5 @@ collect_triplicates = function(platemap, basepath, ext, outfolder,
 
 
   invisible(file.copy(platemap$inpath, platemap$outpath))
-
 }
 

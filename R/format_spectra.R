@@ -150,7 +150,7 @@ importTable = function(f){
 #'
 #' @examples
 import_file.MzMl = function(f) {
-  s = importMzMl(f)
+  s = importMzMl(f, verbose=F)
   return(s[[1]])
 }
 

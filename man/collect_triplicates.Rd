@@ -10,11 +10,13 @@ collect_triplicates(
   ext,
   outfolder,
   keep_dupl,
-  keep_incomplete_tripl
+  keep_incomplete_tripl,
+  dry_run = F
 )
 }
 \arguments{
-\item{outfolder}{}
+\item{dry_run}{Don't copy spectra, just return an updated platemap, with possible duplicates
+included, gathered and with input and output filenames}
 }
 \value{
 

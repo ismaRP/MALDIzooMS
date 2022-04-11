@@ -183,6 +183,17 @@ mergeReplicates <- function(l, labels, names, method=c("mean", "median", "sum"),
           allm, ll, ln, SIMPLIFY = F
         )
         return(do.call(bind_rows, allm))
+      } else if (all(sapply(allm, is.matrix))){
+        allm = mapply(
+          function(x, lab, nam) {
+            x = as.data.frame(x)
+            x$sample = lab
+            x$replicate = nam
+            x
+          },
+          allm, ll, ln, SIMPLIFY = F
+        )
+        return(do.call(bind_rows, allm))
       } else {
         if (!all(length(cur) == len) || !all(.flat(cur) == .flat(allm))) {
           if (!is.list(cur)) {

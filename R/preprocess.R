@@ -220,6 +220,7 @@ peaksLocalBG = function(s, halfWindowSize, mass_range, bg_cutoff, l_cutoff){
   m = cbind(m, snr_values[peaks_mask])
   non_bg_peaks = nrow(m)
   frac_rem = non_bg_peaks/total_peaks
+
   p = createMassPeaks(
     m[,1], m[,2], m[,3],
     metaData = s@metaData)

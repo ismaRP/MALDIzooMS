@@ -4,10 +4,12 @@
 \alias{rw_chunk_mzml}
 \title{Title}
 \usage{
-rw_chunk_mzml(x, indir, read_f, outdir, fmt)
+rw_chunk_mzml(x, indir, read_f, outpath, in_fmt, fmt)
 }
 \arguments{
-\item{fmt}{}
+\item{x}{sample names}
+
+\item{in_fmt}{}
 }
 \value{
 

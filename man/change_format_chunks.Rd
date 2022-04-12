@@ -4,10 +4,19 @@
 \alias{change_format_chunks}
 \title{Read MALDI data in a given format in chunks and export in a different one}
 \usage{
-change_format_chunks(indir, readf, outdir, writef, mc.cores = 4, nchunks = 80)
+change_format_chunks(
+  spectra_names,
+  indir,
+  in_fmt,
+  readf,
+  outpath,
+  writef,
+  mc.cores = 4,
+  nchunks = 80
+)
 }
 \arguments{
-\item{writef}{}
+\item{in_fmt}{}
 }
 \value{
 

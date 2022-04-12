@@ -45,6 +45,7 @@ collect_triplicates = function(platemap, basepath, ext, outfolder,
   }
 
 
+
   # Gather platemap
   platemap = platemap %>%
     gather("spot", "coordinates", c(spot1, spot2, spot3)) %>%
@@ -67,12 +68,11 @@ collect_triplicates = function(platemap, basepath, ext, outfolder,
     mutate(outpath = file.path(outfolder,
                                paste0(sample_name, "_", replicate, ".", ext)))
 
-  if (dry_run){
-    return(platemap)
-  } else {
+  if (!dry_run){
     invisible(file.copy(platemap$inpath, platemap$outpath))
-    return(platemap)
   }
+
+  return(platemap)
 
 }
 

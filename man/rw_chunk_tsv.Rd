@@ -4,7 +4,7 @@
 \alias{rw_chunk_tsv}
 \title{Title}
 \usage{
-rw_chunk_tsv(x, indir, read_f, outdir, fmt)
+rw_chunk_tsv(x, indir, read_f, outpath, in_fmt, fmt)
 }
 \arguments{
 \item{fmt}{}

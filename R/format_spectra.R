@@ -2,15 +2,18 @@
 #'
 #' @param indir
 #' @param readf
-#' @param outdir
 #' @param nchunks
 #' @param writef
+#' @param spectra_names
+#' @param mc.cores
+#' @param outpath
+#' @param in_fmt
 #'
 #' @return
 #' @export
 #'
 #' @examples
-change_format_chunks = function(indir, readf, outdir, writef, mc.cores=4, nchunks = 80){
+change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath, writef, mc.cores=4, nchunks = 80){
   switch(EXPR=readf,
          "fread" = {
            read_f = importTsv
@@ -24,32 +27,36 @@ change_format_chunks = function(indir, readf, outdir, writef, mc.cores=4, nchunk
   )
   switch(EXPR=writef,
          "tab" = {
-           fmt = ".tab"
+           fmt = "tab"
            rw_f = rw_chunk_tsv
          },
          "mzML" = {
-           fmt = ".mzML"
+           fmt = "mzML"
            rw_f = rw_chunk_mzml
          }
   )
-  spectra_f = list.files(indir)
+  isFile = !isTRUE(file.info(outpath)$isdir)
+  if (isFile & (nchunks > 1 || writef!='mzML')){
+    stop("1 file write mode is only supported for mzML format and 1 chunk")
+  }
 
+  # spectra_f = list.files(indir)
   # Filter out empty files
   filter_empty = lapply(
-    spectra_f,
+    paste0(spectra_names, '.', in_fmt),
     check_empty,
     indir
   )
   filter_empty = unlist(filter_empty)
-  spectra_f = spectra_f[filter_empty]
+  spectra_names = spectra_names[filter_empty]
 
-  if (nchunks > 1) spectra_chunks = chunks(spectra_f, nchunks)
-  else spectra_chunks = list(spectra_f)
+  if (nchunks > 1) spectra_chunks = chunks(spectra_names, nchunks)
+  else spectra_chunks = list(spectra_names)
 
   invisible(mclapply(
     spectra_chunks,
     rw_f,
-    indir, read_f, outdir, fmt, mc.cores=mc.cores
+    indir, read_f, outpath, in_fmt, fmt, mc.cores=mc.cores
   ))
 
 }
@@ -57,21 +64,41 @@ change_format_chunks = function(indir, readf, outdir, writef, mc.cores=4, nchunk
 
 #' Title
 #'
-#' @param x
+#' @param x sample names
 #' @param indir
 #' @param read_f
-#' @param outdir
 #' @param fmt
+#' @param outpath
+#' @param in_fmt
 #'
 #' @return
 #' @importFrom MALDIquantForeign exportMzMl
 #' @export
 #'
 #' @examples
-rw_chunk_mzml = function(x, indir, read_f, outdir, fmt) {
-  infiles = file.path(indir, x)
+rw_chunk_mzml = function(x, indir, read_f, outpath, in_fmt, fmt) {
+  # Create infiles
+  infiles = paste0(x, '.', in_fmt)
+  infiles = file.path(indir, infiles)
   l = lapply(infiles, read_f)
-  exportMzMl(l, path=outdir)
+  l = mapply(
+    function(s, n){
+      s@metaData$id = n
+      s
+    }, l, x)
+
+  # Write to outpath
+  # outfiles = sub(pattern="\\.[[:alnum:]]+?$|(/|\\\\)+[^.\\\\/]+$",
+  #                replacement="", x=x)
+  isFile = !isTRUE(file.info(outpath)$isdir)
+  if (!isFile) {
+    outfiles = paste0(x, '.', fmt)
+    outfiles = file.path(outpath, outfiles)
+    invisible(mapply(exportMzMl, l, outfiles))
+  } else {
+    exportMzMl(l, path=outpath)
+  }
+
 }
 
 #' Title
@@ -86,15 +113,20 @@ rw_chunk_mzml = function(x, indir, read_f, outdir, fmt) {
 #' @export
 #'
 #' @examples
-rw_chunk_tsv = function(x, indir, read_f, outdir, fmt) {
-  infiles = file.path(indir, x)
+rw_chunk_tsv = function(x, indir, read_f, outpath, in_fmt, fmt) {
+  infiles = paste0(x, '.', in_fmt)
+  infiles = file.path(infiles, in_fmt)
   l = lapply(infiles, read_f)
+  l = mapply(
+    function(s, n){
+      s@metaData$id = n
+      s
+    }, l, x)
 
-  outfiles = sub(pattern="\\.[[:alnum:]]+?$|(/|\\\\)+[^.\\\\/]+$",
-                 replacement="", x=x)
-  outfiles = paste0(outfiles, '.', fmt)
-  outfiles = file.path(outdir, outfiles)
-
+  # outfiles = sub(pattern="\\.[[:alnum:]]+?$|(/|\\\\)+[^.\\\\/]+$",
+  #                replacement="", x=x)
+  outfiles = paste0(x, '.', fmt)
+  outfiles = file.path(outpath, outfiles)
   exportTsv(l, path=outfiles)
 }
 

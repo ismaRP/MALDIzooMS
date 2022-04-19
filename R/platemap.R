@@ -18,11 +18,16 @@
 #' @export
 #'
 #' @examples
-collect_triplicates = function(platemap, basepath, ext, outfolder,
-                               keep_dupl, keep_incomplete_tripl, dry_run=F) {
+collect_triplicates = function(platemap, basepath=NULL, ext=NULL, outfolder=NULL,
+                               keep_dupl=T, keep_incomplete_tripl=T, dry_run=F) {
+
+  if (any(is.null(basepath), is.null(ext), is.null(outfolder)) &
+      !dry_run) {
+    stop("Specifiy path for platemaps, extension and output folder")
+  }
 
   platemap = platemap %>%
-    arrange(basename, sample_name)
+    arrange(date, sample_name)
 
   if (any(duplicated(platemap$sample_name), na.rm = T)) {
     if (keep_dupl == F) {
@@ -33,9 +38,10 @@ collect_triplicates = function(platemap, basepath, ext, outfolder,
         ave(seq_along(sample_name), sample_name, FUN=seq_along))
       dupl_all = with(platemap,
         duplicated(sample_name) | duplicated(sample_name, fromLast = T))
-
+      dupl = with(platemap,
+        duplicated(sample_name, fromLast = T))
       platemap = platemap %>%
-        mutate(duplicated = dupl_all) %>%
+        mutate(dupl_all = dupl_all, dupl = dupl) %>%
         mutate(
           sample_name = ifelse(dupl_all,
                                paste0(sample_name, "__", duplidx),
@@ -44,33 +50,38 @@ collect_triplicates = function(platemap, basepath, ext, outfolder,
     }
   }
 
-
-
   # Gather platemap
   platemap = platemap %>%
     gather("spot", "coordinates", c(spot1, spot2, spot3)) %>%
     arrange(folder, subfolder, sample_name) %>%
-    mutate(replicate = substr(spot, 5, 5)) %>%
-    mutate(inpath = file.path(basepath, folder,
-                              paste0(subfolder, '.', ext),
-                              paste0(basename, '_', coordinates, '.', ext))) %>%
-    mutate(exists = file.exists(inpath))
-
-  if (!keep_incomplete_tripl) {
-    platemap = platemap %>% group_by(sample_name) %>%
-      mutate(complete = all(exists)) %>% ungroup() %>%
-      filter(complete)
-  } else {
-    platemap = platemap %>% filter(exists)
-  }
-
-  platemap = platemap %>%
-    mutate(outpath = file.path(outfolder,
-                               paste0(sample_name, "_", replicate, ".", ext)))
+    mutate(replicate = as.numeric(substr(spot, 5, 5)))
 
   if (!dry_run){
-    invisible(file.copy(platemap$inpath, platemap$outpath))
+    platemap_files = platemap %>%
+      mutate(inpath = file.path(basepath, folder,
+                                paste0(subfolder, '.', ext),
+                                paste0(basename, '_', coordinates, '.', ext))) %>%
+      mutate(exists = file.exists(inpath))
+
+    if (!keep_incomplete_tripl) {
+      platemap_files = platemap_files %>% group_by(sample_name) %>%
+        mutate(complete = all(exists)) %>% ungroup() %>%
+        filter(complete)
+    } else {
+      platemap_files = platemap_files %>% filter(exists)
+    }
+
+    platemap_files = platemap_files %>%
+      mutate(outpath = file.path(outfolder,
+                                 paste0(sample_name, "_", replicate, ".", ext)))
+
+
+    invisible(file.copy(platemap_files$inpath,
+                        platemap_files$outpath))
   }
+
+
+
 
   return(platemap)
 

@@ -134,7 +134,7 @@ rw_chunk_tsv = function(x, ch, indir, read_f, outpath, in_fmt, fmt, nchunks) {
   #                replacement="", x=x)
   outfiles = paste0(x, '.', fmt)
   outfiles = file.path(outpath, outfiles)
-  exportTsv(l, path=outfiles, force=T)
+  exportTsv(l, path=outfiles)
 }
 
 ##### IMPORT FUNCTIONS READ FILE BY FILE

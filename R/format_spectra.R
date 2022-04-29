@@ -53,10 +53,11 @@ change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath, wr
   if (nchunks > 1) spectra_chunks = chunks(spectra_names, nchunks)
   else spectra_chunks = list(spectra_names)
 
-  invisible(mclapply(
-    spectra_chunks,
+  invisible(mcmapply(
     rw_f,
-    indir, read_f, outpath, in_fmt, fmt, mc.cores=mc.cores
+    spectra_chunks,
+    seq_along(spectra_chunks),
+    MoreArgs=list(indir, read_f, outpath, in_fmt, fmt, nchunks), mc.cores=mc.cores
   ))
 
 }
@@ -76,7 +77,10 @@ change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath, wr
 #' @export
 #'
 #' @examples
-rw_chunk_mzml = function(x, indir, read_f, outpath, in_fmt, fmt) {
+rw_chunk_mzml = function(x, ch, indir, read_f, outpath, in_fmt, fmt, nchunks) {
+  if (ch %% 5 == 0 | ch == nchunks){
+    cat(sprintf('Chunk %i of %i', ch, nchunks), "\n")
+  }
   # Create infiles
   infiles = paste0(x, '.', in_fmt)
   infiles = file.path(indir, infiles)
@@ -94,9 +98,9 @@ rw_chunk_mzml = function(x, indir, read_f, outpath, in_fmt, fmt) {
   if (!isFile) {
     outfiles = paste0(x, '.', fmt)
     outfiles = file.path(outpath, outfiles)
-    invisible(mapply(exportMzMl, l, outfiles))
+    invisible(mapply(exportMzMl, l, outfiles, MoreArgs = list(force=T)))
   } else {
-    exportMzMl(l, path=outpath)
+    exportMzMl(l, path=outpath, force=T)
   }
 
 }
@@ -113,7 +117,10 @@ rw_chunk_mzml = function(x, indir, read_f, outpath, in_fmt, fmt) {
 #' @export
 #'
 #' @examples
-rw_chunk_tsv = function(x, indir, read_f, outpath, in_fmt, fmt) {
+rw_chunk_tsv = function(x, ch, indir, read_f, outpath, in_fmt, fmt, nchunks) {
+  if (ch %% 5 == 0 | ch == nchunks){
+    cat(sprintf('Chunk %i of %i', ch, nchunks), "\n")
+  }
   infiles = paste0(x, '.', in_fmt)
   infiles = file.path(infiles, in_fmt)
   l = lapply(infiles, read_f)
@@ -127,7 +134,7 @@ rw_chunk_tsv = function(x, indir, read_f, outpath, in_fmt, fmt) {
   #                replacement="", x=x)
   outfiles = paste0(x, '.', fmt)
   outfiles = file.path(outpath, outfiles)
-  exportTsv(l, path=outfiles)
+  exportTsv(l, path=outfiles, force=T)
 }
 
 ##### IMPORT FUNCTIONS READ FILE BY FILE

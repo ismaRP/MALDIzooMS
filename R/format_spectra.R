@@ -42,13 +42,13 @@ change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath, wr
 
   # spectra_f = list.files(indir)
   # Filter out empty files
-  filter_empty = lapply(
-    paste0(spectra_names, '.', in_fmt),
-    check_empty,
-    indir
-  )
-  filter_empty = unlist(filter_empty)
-  spectra_names = spectra_names[filter_empty]
+  # filter_empty = lapply(
+  #   paste0(spectra_names, '.', in_fmt),
+  #   check_empty,
+  #   indir
+  # )
+  # filter_empty = unlist(filter_empty)
+  # spectra_names = spectra_names[filter_empty]
 
   if (nchunks > 1) spectra_chunks = chunks(spectra_names, nchunks)
   else spectra_chunks = list(spectra_names)

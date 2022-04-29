@@ -66,7 +66,7 @@ collect_triplicates = function(platemap, basepath=NULL, ext=NULL, outfolder=NULL
         mutate(complete = all(exists)) %>% ungroup() %>%
         filter(complete)
     } else {
-      platemap_files = platemap_files %>% filter(exists)
+      platemap_files = platemap %>% filter(exists)
     }
 
     platemap_files = platemap_files %>%

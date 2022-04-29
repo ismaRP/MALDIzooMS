@@ -54,17 +54,15 @@ collect_triplicates = function(platemap, basepath=NULL, ext=NULL, outfolder=NULL
   platemap = platemap %>%
     gather("spot", "coordinates", c(spot1, spot2, spot3)) %>%
     arrange(folder, subfolder, sample_name) %>%
-    mutate(replicate = as.numeric(substr(spot, 5, 5)))
+    mutate(replicate = as.numeric(substr(spot, 5, 5))) %>%
+    mutate(inpath = file.path(basepath, folder,
+                              paste0(subfolder, '.', ext),
+                              paste0(basename, '_', coordinates, '.', ext))) %>%
+    mutate(exists = file.exists(inpath))
 
   if (!dry_run){
-    platemap_files = platemap %>%
-      mutate(inpath = file.path(basepath, folder,
-                                paste0(subfolder, '.', ext),
-                                paste0(basename, '_', coordinates, '.', ext))) %>%
-      mutate(exists = file.exists(inpath))
-
     if (!keep_incomplete_tripl) {
-      platemap_files = platemap_files %>% group_by(sample_name) %>%
+      platemap_files = platemap %>% group_by(sample_name) %>%
         mutate(complete = all(exists)) %>% ungroup() %>%
         filter(complete)
     } else {
@@ -79,9 +77,6 @@ collect_triplicates = function(platemap, basepath=NULL, ext=NULL, outfolder=NULL
     invisible(file.copy(platemap_files$inpath,
                         platemap_files$outpath))
   }
-
-
-
 
   return(platemap)
 

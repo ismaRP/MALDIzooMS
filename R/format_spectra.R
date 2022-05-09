@@ -13,13 +13,23 @@
 #' @export
 #'
 #' @examples
-change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath, writef, mc.cores=4, nchunks = 80){
+change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath, writef, sep='\t', mc.cores=4, nchunks = 80){
   switch(EXPR=readf,
          "fread" = {
-           read_f = importTsv
+           read_f = function(sep){
+             function(x){
+               importTsv(f=x, sep=sep)
+             }
+           }
+           read_f = read_f(sep=sep)
          },
          "table" = {
-           read_f = importTable
+           read_f = function(sep){
+             function(x){
+               importTable(f=x, sep=sep)
+             }
+           }
+           read_f = read_f(sep=sep)
          },
          "mzML" = {
            read_f = import_file.MzMl
@@ -149,8 +159,8 @@ rw_chunk_tsv = function(x, ch, indir, read_f, outpath, in_fmt, fmt, nchunks) {
 #' @importFrom tibble tibble
 #' @export
 #'
-importTsv = function(f) {
-  s = tibble(fread(f, colClasses=c("numeric", "numeric"), sep="\t"))
+importTsv = function(f, sep="\t") {
+  s = tibble(fread(f, colClasses=c("numeric", "numeric"), sep=sep))
   s = createMassSpectrum(
     mass=s[[1]],
     intensity=s[[2]],
@@ -169,7 +179,7 @@ importTsv = function(f) {
 #' @importFrom utils read.table
 #' @export
 #'
-importTable = function(f){
+importTable = function(f, sep=''){
   s = read.table(f)
   s = createMassSpectrum(
     mass=s[[1]],
@@ -206,10 +216,10 @@ import_file.MzMl = function(f) {
 #'
 #' @examples
 exportTsv = function(l, path) {
-  mapply(
-    function(x, f) fwrite(list(x@mass, x@instensity), f),
+  invisible(mapply(
+    function(x, f) fwrite(list(x@mass, x@intensity), f, sep="\t"),
     l, path
-  )
+  ))
 }
 
 

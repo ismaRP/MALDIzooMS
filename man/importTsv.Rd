@@ -4,7 +4,7 @@
 \alias{importTsv}
 \title{Title}
 \usage{
-importTsv(f)
+importTsv(f, sep = "\\t")
 }
 \arguments{
 \item{f}{}

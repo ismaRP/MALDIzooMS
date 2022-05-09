@@ -18,7 +18,7 @@
 #' @export
 #'
 #' @examples
-collect_triplicates = function(platemap, basepath=NULL, ext=NULL, outfolder=NULL,
+collect_triplicates = function(platemap, basepath="", ext=NULL, outfolder=NULL,
                                keep_dupl=T, keep_incomplete_tripl=T, dry_run=F) {
 
   if (any(is.null(basepath), is.null(ext), is.null(outfolder)) &

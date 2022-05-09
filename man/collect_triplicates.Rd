@@ -6,11 +6,11 @@
 \usage{
 collect_triplicates(
   platemap,
-  basepath,
-  ext,
-  outfolder,
-  keep_dupl,
-  keep_incomplete_tripl,
+  basepath = "",
+  ext = NULL,
+  outfolder = NULL,
+  keep_dupl = T,
+  keep_incomplete_tripl = T,
   dry_run = F
 )
 }

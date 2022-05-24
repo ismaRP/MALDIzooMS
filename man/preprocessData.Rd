@@ -8,7 +8,7 @@ preprocessData(
   indir,
   readf = c("fread", "table", "mzml"),
   sep = NULL,
-  chunks = 50,
+  nchunks = 50,
   prepf = NULL,
   ncores = NULL,
   iocores = 1,
@@ -23,9 +23,9 @@ Currently restricted to one of "fread", "table" or "mzml"}
 
 \item{sep}{Separator character for input files}
 
-\item{chunks}{Number of chunks all the spectra should be divided into for reading and
-processing. If all spectra is loaded and processed at once, i.e. chunks=1,
-it can overload RAM memory. If chunks>1 data is loaded and processed to the
+\item{nchunks}{Number of chunks all the spectra should be divided into for reading and
+processing. If all spectra is loaded and processed at once, i.e. nchunks=1,
+it can overload RAM memory. If nchunks>1 data is loaded and processed to the
 much lighter list of peaks in chunks batches.}
 
 \item{prepf}{Custom preprocessing function}

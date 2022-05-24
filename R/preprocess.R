@@ -235,10 +235,10 @@ peaksLocalBG = function(s, halfWindowSize, mass_range, bg_cutoff, l_cutoff, SNR=
 #' @param readf
 #' A string value. choose function to use to read spectra.
 #' Currently restricted to one of "fread", "table" or "mzml"
-#' @param chunks
+#' @param nchunks
 #' Number of chunks all the spectra should be divided into for reading and
-#' processing. If all spectra is loaded and processed at once, i.e. chunks=1,
-#' it can overload RAM memory. If chunks>1 data is loaded and processed to the
+#' processing. If all spectra is loaded and processed at once, i.e. nchunks=1,
+#' it can overload RAM memory. If nchunks>1 data is loaded and processed to the
 #' much lighter list of peaks in chunks batches.
 #' @param ncores
 #' Number of cores used for the preprocessing of spectra. The cores will work in
@@ -261,8 +261,8 @@ peaksLocalBG = function(s, halfWindowSize, mass_range, bg_cutoff, l_cutoff, SNR=
 #'
 #' @examples
 preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
-                           chunks = 50, prepf = NULL,
-                           ncores = NULL, iocores = 1, ...){
+                          nchunks = 50, prepf = NULL,
+                          ncores = NULL, iocores = 1, ...){
   if (is.null(ncores)){
     ncores = detectCores() - 2
   } else {
@@ -289,8 +289,8 @@ preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
 
   spectra_f = list.files(indir)
 
-  if (chunks > 1) {
-    spectra_chunks = chunks(spectra_f, chunks)
+  if (nchunks > 1) {
+    spectra_chunks = chunks(spectra_f, nchunks)
   } else {
     spectra_chunks = list(spectra_f)
   }
@@ -299,7 +299,7 @@ preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
   peaks = mapply(
     function(x, ch){
       if (ch %% 5 == 0){
-        cat(sprintf('Chunk %i of %i', ch, chunks), "\n")
+        cat(sprintf('Chunk %i of %i', ch, nchunks), "\n")
       }
       infiles = file.path(indir, x)
       l = mclapply(

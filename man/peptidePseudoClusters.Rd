@@ -4,12 +4,15 @@
 \alias{peptidePseudoClusters}
 \title{peptidePseudoClusters}
 \usage{
-peptidePseudoClusters(x, ...)
+peptidePseudoClusters(x, masses, tol, n_isopeaks, min_isopeaks)
 }
 \arguments{
-\item{x}{MassPeaks object}
+\item{x}{\code{\link[MALDIquant]{MassPeaks}} object}
 
-\item{...}{}
+\item{masses}{1D Vector of isotopic masses to search.
+See examples for how to generate from a vector of single peptide masses}
+
+\item{min_isopeaks}{}
 }
 \value{
 data.frame with mass, intensity and s2n values for pseudo-isotopic
@@ -17,4 +20,13 @@ data.frame with mass, intensity and s2n values for pseudo-isotopic
 }
 \description{
 Extracts pseudo envelopes from given peptide masses
+}
+\examples{
+masses = c(100, 200, 300)
+n_isopeaks = 5
+masses = matrix(masses, nrow = n_isopeaks, ncol = length(masses), byrow = T)
+d = 1.00235
+masses = masses + (d * 0L:(n_isopeaks - 1L))
+masses = sort(masses)
+print(masses)
 }

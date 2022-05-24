@@ -11,6 +11,7 @@ change_format_chunks(
   readf,
   outpath,
   writef,
+  sep = "\\t",
   mc.cores = 4,
   nchunks = 80
 )

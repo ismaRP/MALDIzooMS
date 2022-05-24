@@ -4,7 +4,7 @@
 \alias{importTable}
 \title{Title}
 \usage{
-importTable(f)
+importTable(f, sep = "")
 }
 \arguments{
 \item{f}{}

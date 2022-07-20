@@ -4,13 +4,16 @@
 \alias{intRefPeaks}
 \title{Title}
 \usage{
-intRefPeaks(l, minFreq, method, tolerance, labels = NULL)
+intRefPeaks(
+  l,
+  method = c("strict", "relaxed"),
+  minFreq = 0.9,
+  tolerance = 0.002,
+  labels = NULL
+)
 }
 \arguments{
 \item{labels}{}
-}
-\value{
-
 }
 \description{
 Title

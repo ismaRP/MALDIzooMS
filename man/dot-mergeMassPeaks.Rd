@@ -9,9 +9,6 @@
 \arguments{
 \item{ignore.na}{}
 }
-\value{
-
-}
 \description{
 Title
 }

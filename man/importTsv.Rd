@@ -9,9 +9,6 @@ importTsv(f, sep = "\\t")
 \arguments{
 \item{f}{}
 }
-\value{
-
-}
 \description{
 Title
 }

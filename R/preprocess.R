@@ -52,7 +52,7 @@ prepFun = function(FUN, ...){
 #' @examples
 #' masses = c(100, 200, 300)
 #' n_isopeaks = 5
-#' masses = matrix(masses, nrow = n_isopeaks, ncol = length(masses), byrow = T)
+#' masses = matrix(masses, nrow = n_isopeaks, ncol = length(masses), byrow = TRUE)
 #' d = 1.00235
 #' masses = masses + (d * 0L:(n_isopeaks - 1L))
 #' masses = sort(masses)

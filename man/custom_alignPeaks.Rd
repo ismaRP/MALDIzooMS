@@ -15,9 +15,6 @@ custom_alignPeaks(
 \arguments{
 \item{th_peaks}{}
 }
-\value{
-
-}
 \description{
 Title
 }

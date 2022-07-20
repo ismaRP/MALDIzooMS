@@ -9,9 +9,6 @@ as.matrix.MassObjectList(l)
 \arguments{
 \item{l}{}
 }
-\value{
-
-}
 \description{
 Title
 }

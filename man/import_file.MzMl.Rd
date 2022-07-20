@@ -9,9 +9,6 @@ import_file.MzMl(f)
 \arguments{
 \item{f}{}
 }
-\value{
-
-}
 \description{
 Title
 }

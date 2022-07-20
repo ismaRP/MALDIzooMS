@@ -57,7 +57,9 @@ as.matrix.MassObjectList = function(l){
 #' @export
 #'
 #' @examples
-intRefPeaks = function(l, minFreq, method, tolerance, labels=NULL){
+intRefPeaks = function(l, method=c('strict', 'relaxed'), minFreq=0.9,
+                       tolerance=0.002, labels=NULL){
+  method = match.arg(method)
   if (is.null(labels)){
     referencePeaks = filterPeaks(
       binPeaks(l, method=method, tolerance=tolerance),
@@ -115,7 +117,7 @@ parse_seqs = function(species, chain, id, sequence, gpo_only=F){
 #' @export
 #'
 #' @examples
-extRefPeaks = function(sequences, mc.cores=4L, gpo_only=F) {
+extRefPeaks = function(sequences, mc.cores=4L, gpo_only=F, masspeaks=T) {
   # Digest sequences
   peptides = do.call(
     mcmapply,
@@ -128,10 +130,14 @@ extRefPeaks = function(sequences, mc.cores=4L, gpo_only=F) {
   # peptides = peptides[peptides$nglut==0,]
   peptides = peptides[!duplicated(select(peptides, -species, -seqpos)),] %>%
     select(-species)
-  ref_peaks = createMassPeaks(mass=sort(peptides$mass1), intensity=rep(1, nrow(peptides)))
-  return(ref_peaks)
-}
 
+  if (masspeaks){
+    return(createMassPeaks(mass=sort(peptides$mass1), intensity=rep(1, nrow(peptides))))
+  } else {
+    return(peptides)
+  }
+
+}
 
 
 
@@ -151,7 +157,8 @@ extRefPeaks = function(sequences, mc.cores=4L, gpo_only=F) {
 custom_alignPeaks = function(l, tolerance, minFreq=NULL, reference=NULL, labels=NULL){
 
   if (is.null(reference)){
-    reference = custom_referencePeaks(
+    if (is.null(minFreq)) minFreq=0.9
+    reference = intRefPeaks(
       l,
       minFreq = minFreq,
       method = "strict",
@@ -168,8 +175,8 @@ custom_alignPeaks = function(l, tolerance, minFreq=NULL, reference=NULL, labels=
     method='lowess'
   )
   l = warpMassPeaks(l, warpingFunctions)
-  l = binPeaks(l, method = "strict", tolerance = tolerance)
-  l = binPeaks(l, method = "relaxed", tolerance = tolerance)
+  # l = binPeaks(l, method = "strict", tolerance = tolerance)
+  # l = binPeaks(l, method = "relaxed", tolerance = tolerance)
 
   return(l)
 }

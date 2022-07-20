@@ -9,9 +9,6 @@ as.binary.matrix(m)
 \arguments{
 \item{m}{}
 }
-\value{
-
-}
 \description{
 Title
 }

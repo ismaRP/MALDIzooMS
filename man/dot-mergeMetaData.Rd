@@ -9,9 +9,6 @@
 \arguments{
 \item{ln}{}
 }
-\value{
-
-}
 \description{
 Title
 }

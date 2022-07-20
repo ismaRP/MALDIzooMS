@@ -9,9 +9,6 @@ exportTsv(l, path)
 \arguments{
 \item{path}{}
 }
-\value{
-
-}
 \description{
 Title
 }

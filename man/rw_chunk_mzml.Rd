@@ -11,9 +11,6 @@ rw_chunk_mzml(x, ch, indir, read_f, outpath, in_fmt, fmt, nchunks)
 
 \item{in_fmt}{}
 }
-\value{
-
-}
 \description{
 Title
 }

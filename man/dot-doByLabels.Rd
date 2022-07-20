@@ -9,9 +9,6 @@
 \arguments{
 \item{mc.cores}{}
 }
-\value{
-
-}
 \description{
 Title
 }

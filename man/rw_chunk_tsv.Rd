@@ -9,9 +9,6 @@ rw_chunk_tsv(x, ch, indir, read_f, outpath, in_fmt, fmt, nchunks)
 \arguments{
 \item{fmt}{}
 }
-\value{
-
-}
 \description{
 Title
 }

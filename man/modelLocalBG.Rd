@@ -20,9 +20,6 @@ and \code{bg_cutoff=0.5} would only keep the bottom half.}
 \item{l_cutoff}{Likelihood threshold or p-value. Peaks with a probability of being modelled as
 background noise higher than this are filtered out.}
 }
-\value{
-
-}
 \description{
 modelLocalBG
 }

@@ -9,9 +9,6 @@ importTable(f, sep = "")
 \arguments{
 \item{f}{}
 }
-\value{
-
-}
 \description{
 Title
 }

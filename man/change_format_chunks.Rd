@@ -19,9 +19,6 @@ change_format_chunks(
 \arguments{
 \item{in_fmt}{}
 }
-\value{
-
-}
 \description{
 Read MALDI data in a given format in chunks and export in a different one
 }

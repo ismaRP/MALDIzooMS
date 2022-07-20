@@ -9,9 +9,6 @@ parse_seqs(species, chain, id, sequence, gpo_only = F)
 \arguments{
 \item{sequence}{}
 }
-\value{
-
-}
 \description{
 Title
 }

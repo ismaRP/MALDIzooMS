@@ -4,13 +4,10 @@
 \alias{extRefPeaks}
 \title{Title}
 \usage{
-extRefPeaks(sequences, mc.cores = 4L, gpo_only = F)
+extRefPeaks(sequences, mc.cores = 4L, gpo_only = F, masspeaks = T)
 }
 \arguments{
 \item{gpo_only}{}
-}
-\value{
-
 }
 \description{
 Title

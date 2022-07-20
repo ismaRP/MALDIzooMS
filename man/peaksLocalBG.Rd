@@ -22,9 +22,6 @@ background noise higher than this are filtered out.}
 
 \item{SNR}{Signal to noise threshold for peak detection. Passed to \code{\link[MALDIquant]{detectPeaks}}}
 }
-\value{
-
-}
 \description{
 peaksLocalBG
 }

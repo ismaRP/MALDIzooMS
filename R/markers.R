@@ -119,13 +119,13 @@ align_markers = function(markers, data_path, metadata, ncores, iocores){
   cors = lapply(cor_data, function(x) unlist(lapply(x, function(x) x$cor)))
   cors = do.call(rbind, cors)
   rownames(cors) = sapply(strsplit(rownames(cors), '\\.'), '[[', 1)
-  cors = cors[paste0(metadata_test$sample_name, '_', metadata_test$replicate), ]
+  cors = cors[paste0(metadata$sample_name, '_', metadata$replicate), ]
 
 
   lags = lapply(cor_data, function(x) unlist(lapply(x, function(x) x$lag)))
   lags = do.call(rbind, lags)
   rownames(lags) = sapply(strsplit(rownames(lags), '\\.'), '[[', 1)
-  lags = lags[paste0(metadata_test$sample_name, '_', metadata_test$replicate), ]
+  lags = lags[paste0(metadata$sample_name, '_', metadata$replicate), ]
 
   return(list(cors, lags))
 

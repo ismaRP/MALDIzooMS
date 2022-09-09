@@ -4,10 +4,17 @@
 \alias{pept_fly}
 \title{Title}
 \usage{
-pept_fly(markers, peaks, tolerance = 0.002, match_tol = 0.6, aug_deam = F)
+pept_fly(
+  markers,
+  peaks,
+  peaksby = NULL,
+  tolerance = 0.002,
+  match_tol = 0.6,
+  aug_deam = F
+)
 }
 \arguments{
-\item{match_tol}{}
+\item{aug_deam}{}
 }
 \description{
 Title

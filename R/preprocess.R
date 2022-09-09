@@ -235,34 +235,40 @@ peaksLocalBG = function(s, halfWindowSize, mass_range, bg_cutoff, l_cutoff, SNR=
 #' @param readf
 #' A string value. choose function to use to read spectra.
 #' Currently restricted to one of "fread", "table" or "mzml"
+#' @param sep
+#' Separator character for input files
 #' @param nchunks
 #' Number of chunks all the spectra should be divided into for reading and
 #' processing. If all spectra is loaded and processed at once, i.e. nchunks=1,
 #' it can overload RAM memory. If nchunks>1 data is loaded and processed to the
 #' much lighter list of peaks in chunks batches.
+#' @param prepf
+#' Custom preprocessing function
+#' @param spectra
+#' Subset of spectra from \code{indir} to analyze. Without extension.
+#' If \code{NULL} (default), all spectra is processed.
 #' @param ncores
 #' Number of cores used for the preprocessing of spectra. The cores will work in
 #' parallel with the different spectra within a chunk.
 #' @param iocores
 #' Number of cores used for I/O operations. For some systems I/O operations involving
 #' multiple cores reading or writing at the same time from disk increases time.
-#' @param prepf
-#' Custom preprocessing function
-#' @param sep
-#' Separator character for input files
-#' @param ...
-#' Arguments to be passed to preprocessing function
-#'
+#' @param vch
+#' Every how many chuncks progress is reported
 #' @return A list of objects returned by prepf
 #'
 #' @importFrom parallel mcmapply detectCores mclapply
 #' @export
-#'
-#'
+#' @details
+#' When using \code{"fread"} as the reading function, we can specify the separator \code{sep}.
+#' \code{"table"} is only advised for cases where the separator is variable and
+#' can be one or more spaces or tabs. See \code{\link[utils]{read.table}}.
+#' \code{"fread"} uses internally \code{\link[data.table]{fread}}, which is faster.
+#' \code{"mzml"} uses internally \code{\link[MALDIquantForeign]{importMzMl}}
 #' @examples
 preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
-                          nchunks = 50, prepf = NULL,
-                          ncores = NULL, iocores = 1, ...){
+                          nchunks = 50, prepf = NULL, spectra = NULL,
+                          ncores = NULL, iocores = 1, vch = 5){
   if (is.null(ncores)){
     ncores = detectCores() - 2
   } else {
@@ -288,6 +294,14 @@ preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
   )
 
   spectra_f = list.files(indir)
+  # Remove extension
+  spectra_f = strsplit(spectra_f, "\\.")
+  ext = spectra_f[[1]][2]
+  spectra_f = sapply(spectra_f, "[[", 1)
+
+  if (!is.null(spectra)) {
+    spectra_f = spectra_f[spectra_f %in% spectra]
+  }
 
   if (nchunks > 1) {
     spectra_chunks = chunks(spectra_f, nchunks)
@@ -297,11 +311,11 @@ preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
   names(spectra_chunks) = NULL
 
   peaks = mapply(
-    function(x, ch){
-      if (ch %% 5 == 0){
+    function(x, ch, ext){
+      if (ch %% vch == 0){
         cat(sprintf('Chunk %i of %i', ch, nchunks), "\n")
       }
-      infiles = file.path(indir, x)
+      infiles = file.path(indir, paste0(x, '.', ext))
       l = mclapply(
         infiles,
         read_f,
@@ -316,6 +330,7 @@ preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
     },
     spectra_chunks,
     seq_along(spectra_chunks),
+    MoreArgs = list(ext=ext),
     SIMPLIFY = F
   )
   # Unlist chunks, so all spectra are in one list of depth=1

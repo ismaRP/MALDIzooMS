@@ -10,9 +10,10 @@ preprocessData(
   sep = NULL,
   nchunks = 50,
   prepf = NULL,
+  spectra = NULL,
   ncores = NULL,
   iocores = 1,
-  ...
+  vch = 5
 )
 }
 \arguments{
@@ -30,17 +31,27 @@ much lighter list of peaks in chunks batches.}
 
 \item{prepf}{Custom preprocessing function}
 
+\item{spectra}{Subset of spectra from \code{indir} to analyze. Without extension.
+If \code{NULL} (default), all spectra is processed.}
+
 \item{ncores}{Number of cores used for the preprocessing of spectra. The cores will work in
 parallel with the different spectra within a chunk.}
 
 \item{iocores}{Number of cores used for I/O operations. For some systems I/O operations involving
 multiple cores reading or writing at the same time from disk increases time.}
 
-\item{...}{Arguments to be passed to preprocessing function}
+\item{vch}{Every how many chuncks progress is reported}
 }
 \value{
 A list of objects returned by prepf
 }
 \description{
 Performs smoothening, baseline removal and peak detection on MALDI samples.
+}
+\details{
+When using \code{"fread"} as the reading function, we can specify the separator \code{sep}.
+\code{"table"} is only advised for cases where the separator is variable and
+can be one or more spaces or tabs. See \code{\link[utils]{read.table}}.
+\code{"fread"} uses internally \code{\link[data.table]{fread}}, which is faster.
+\code{"mzml"} uses internally \code{\link[MALDIquantForeign]{importMzMl}}
 }

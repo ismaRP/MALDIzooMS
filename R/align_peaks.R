@@ -148,13 +148,18 @@ extRefPeaks = function(sequences, mc.cores=4L, gpo_only=F, masspeaks=T) {
 #' @param tolerance
 #' @param labels
 #' @param th_peaks
+#' @param ...
 #'
 #' @return
 #' @importFrom MALDIquant determineWarpingFunctions warpMassPeaks binPeaks
 #' @export
 #'
 #' @examples
-custom_alignPeaks = function(l, tolerance, minFreq=NULL, reference=NULL, labels=NULL){
+custom_alignPeaks = function(l, tolerance, minFreq=NULL, reference=NULL, labels=NULL, ...){
+  args_methods = list(...)
+
+  if (is.null(args_methods$allowNoMatches)) args_methods$allowNoMatches = F
+  if (is.null(args_methods$emptyNoMatches)) args_methods$emptyNoMatches = F
 
   if (is.null(reference)){
     if (is.null(minFreq)) minFreq=0.9
@@ -172,9 +177,10 @@ custom_alignPeaks = function(l, tolerance, minFreq=NULL, reference=NULL, labels=
     l,
     reference = reference,
     tolerance = tolerance,
-    method='lowess'
+    method='lowess',
+    allowNoMatches = args_methods$allowNoMatches
   )
-  l = warpMassPeaks(l, warpingFunctions)
+  l = warpMassPeaks(l, warpingFunctions, emptyNoMatches = args_methods$emptyNoMatches)
   # l = binPeaks(l, method = "strict", tolerance = tolerance)
   # l = binPeaks(l, method = "relaxed", tolerance = tolerance)
 

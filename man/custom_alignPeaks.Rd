@@ -9,11 +9,12 @@ custom_alignPeaks(
   tolerance,
   minFreq = NULL,
   reference = NULL,
-  labels = NULL
+  labels = NULL,
+  ...
 )
 }
 \arguments{
-\item{th_peaks}{}
+\item{...}{}
 }
 \description{
 Title

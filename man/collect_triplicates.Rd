@@ -6,6 +6,7 @@
 \usage{
 collect_triplicates(
   platemap,
+  format = c("wide", "long"),
   basepath = "",
   ext = NULL,
   outfolder = NULL,
@@ -26,6 +27,11 @@ It must contain the following columns:
   \item date: the date each plate was spotted or analyzed.
   There can be more than 3 replicates, but it always need to have this name: "spot#"
 }}
+
+\item{format}{Either "wide" or "long"
+In the wide format, each row is one sample and the coordinates of the replicates are in different columns.
+In the long format, each row is an individual replicate. In this case, platemap must contain a column called "replicate" with the replicate number
+and the column with the coordinates should be called "spot". Long format assumes no duplicates.}
 
 \item{basepath}{Path to plates}
 

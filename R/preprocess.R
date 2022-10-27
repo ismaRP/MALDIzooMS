@@ -298,7 +298,6 @@ preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
   spectra_f = strsplit(spectra_f, "\\.")
   ext = spectra_f[[1]][2]
   spectra_f = sapply(spectra_f, "[[", 1)
-
   if (!is.null(spectra)) {
     spectra_f = spectra_f[spectra_f %in% spectra]
   }

@@ -231,7 +231,7 @@ max_cc = function(rs_data, laglim, myby){
 align_sample = function(s, markers, myby, gauss, laglim, halfWindowSize){
   s = smoothIntensity(s, 'SavitzkyGolay', halfWindowSize)
   s = as.matrix(s)
-  markers = markers[, c('seq', 'ndeam', 'nhyd')]
+  markers = markers[, c('seq', 'ndeam', 'nhyd', 'pept')]
   markers_list = split(markers, seq(nrow(markers)))
   al = lapply(
     markers_list,
@@ -247,6 +247,7 @@ align_sample = function(s, markers, myby, gauss, laglim, halfWindowSize){
       rs_data = ccf_data(ts, subms, myxlim, myby=myby, gauss=gauss)
 
       al_cor =  max_cc(rs_data, myby=myby, laglim=laglim)
+      al_cor$pept = p$pept
       return(al_cor)
     },
     s, myby, gauss, laglim)
@@ -288,20 +289,21 @@ get_max_cor = function(markers, data_path, metadata, mat_format,
     cors = do.call(rbind, cors)
     # rownames(cors) = sapply(strsplit(rownames(cors), '\\.'), '[[', 1)
     cors = cors[paste0(metadata$sample_name, '_', metadata$replicate), ]
-
+    colnames(cors) = markers$pept
 
     lags = lapply(cor_data, function(x) unlist(lapply(x, function(x) x$lag)))
     lags = do.call(rbind, lags)
     # rownames(lags) = sapply(strsplit(rownames(lags), '\\.'), '[[', 1)
     lags = lags[paste0(metadata$sample_name, '_', metadata$replicate), ]
-
+    colnames(lags) = markers$pept
     return(list(cors, lags))
+
   } else if (mat_format == 'long') {
     cor_data = mapply(
       function(x, n) {
         d = mapply(
           function(x, n){
-            x$pept = n
+            # x$pept = n
             x
           }, x, names(x), SIMPLIFY = FALSE, USE.NAMES = FALSE)
         d = do.call(bind_rows, d)
@@ -339,7 +341,7 @@ align_sample_full = function(s, markers, myby, gauss, laglim, halfWindowSize) {
   # Smoothing
   s = smoothIntensity(s, 'SavitzkyGolay', halfWindowSize)
   s = as.matrix(s)
-  markers = markers[, c('seq', 'ndeam', 'nhyd')]
+  markers = markers[, c('seq', 'ndeam', 'nhyd', 'pept')]
   markers_list = split(markers, seq(nrow(markers)))
   al = lapply(
     markers_list,
@@ -353,8 +355,10 @@ align_sample_full = function(s, markers, myby, gauss, laglim, halfWindowSize) {
       subms = ms_subrange(s, lbl, ubl)
 
       rs_data = ccf_data(ts, subms, myxlim, myby=myby, gauss=gauss)
+      rs_data$pept = p$pept
 
       al_cor =  max_cc(rs_data, myby=myby, laglim=laglim)
+      al_cor$pept = p$pept
 
       rs_data$x_lag = rs_data$x + al_cor$lag
 
@@ -396,15 +400,17 @@ align_markers = function(markers, data_path, metadata, mat_format,
     spectra = spectra, ncores = ncores, iocores = iocores, vch=vch)
 
   if (mat_format == 'wide') {
-    cors = lapply(cor_data, function(x) unlist(lapply(x, function(x) x$cor$cor)))
+    cors = lapply(alignment_data, function(x) unlist(lapply(x, function(x) x$cor$cor)))
     cors = do.call(rbind, cors)
     # rownames(cors) = sapply(strsplit(rownames(cors), '\\.'), '[[', 1)
     cors = cors[paste0(metadata$sample_name, '_', metadata$replicate), ]
+    colnames(cors) = markers$pept
 
-    lags = lapply(cor_data, function(x) unlist(lapply(x, function(x) x$cor$lag)))
+    lags = lapply(alignment_data, function(x) unlist(lapply(x, function(x) x$cor$lag)))
     lags = do.call(rbind, lags)
     # rownames(lags) = sapply(strsplit(rownames(lags), '\\.'), '[[', 1)
     lags = lags[paste0(metadata$sample_name, '_', metadata$replicate), ]
+    colnames(lags) = markers$pept
 
     cor_data = list(cors = cors, lags = lags)
   } else if (mat_format == 'long') {
@@ -412,7 +418,7 @@ align_markers = function(markers, data_path, metadata, mat_format,
       function(x, n) {
         d = mapply(
           function(x, n){
-            x$cor$pept = n
+            # x$cor$pept = n
             x$cor
           }, x, names(x), SIMPLIFY = FALSE, USE.NAMES = FALSE)
         d = do.call(bind_rows, d)
@@ -429,7 +435,7 @@ align_markers = function(markers, data_path, metadata, mat_format,
     function(x, n) {
       d = mapply(
         function(x, n){
-          x$al$pept = n
+          # x$al$pept = n
           x$al
         }, x, names(x), SIMPLIFY = FALSE, USE.NAMES = FALSE)
       d = do.call(bind_rows, d)

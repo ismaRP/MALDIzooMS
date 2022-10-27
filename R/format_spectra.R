@@ -1,9 +1,9 @@
 #' Read MALDI data in a given format in chunks and export in a different one
 #'
 #' @param indir
-#' @param readf
+#' @param readf One of 'fread', 'table' or 'mzML'
 #' @param nchunks
-#' @param writef
+#' @param writef One of 'tab' or 'mzML'
 #' @param spectra_names
 #' @param mc.cores
 #' @param outpath

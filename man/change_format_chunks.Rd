@@ -18,6 +18,10 @@ change_format_chunks(
 }
 \arguments{
 \item{in_fmt}{}
+
+\item{readf}{One of 'fread', 'table' or 'mzML'}
+
+\item{writef}{One of 'tab' or 'mzML'}
 }
 \description{
 Read MALDI data in a given format in chunks and export in a different one

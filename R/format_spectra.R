@@ -226,6 +226,16 @@ exportTsv = function(l, path) {
 
 chunks = function(x,n) split(x, cut(seq_along(x), n, labels = FALSE))
 
+
+#' Title
+#'
+#' @param x
+#' @param indir
+#'
+#' @return
+#' @export
+#'
+#' @examples
 check_empty = function(x, indir){
   f = file.path(indir, x)
   t = readLines(f,1)

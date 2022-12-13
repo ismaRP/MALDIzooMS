@@ -5,6 +5,7 @@
 #' @param peaks
 #' @param tolerance
 #' @param match_tol
+#' @param match_tol_unit
 #' @param peaksby
 #' @param aug_deam
 #'
@@ -16,7 +17,14 @@
 #' @export
 #'
 #' @examples
-pept_fly = function(markers, peaks, peaksby=NULL, tolerance=0.002, match_tol = 0.6, aug_deam = F){
+pept_fly = function(markers, peaks, peaksby=NULL, tolerance=0.002,
+                    match_tol = 0.6, match_tol_unit=c('Da', 'ppm'), aug_deam = F){
+
+  match_tol_unit = match.arg(match_tol_unit)
+
+  if (match_tol_unit == 'ppm'){
+    match_tol = match_tol * markers$mass1/1e6
+  }
 
   ref_peaks = createMassPeaks(
     mass = markers$mass1,
@@ -78,7 +86,8 @@ pept_fly = function(markers, peaks, peaksby=NULL, tolerance=0.002, match_tol = 0
       # ms2conf = pept_ms2conf & nhyd_ms2conf & nglut_ms2conf,
       malditof_mass = masses[pos],
       malditof_frac = frac) %>%
-    mutate(error_mass = mass1 - malditof_mass)
+    mutate(error_mass = mass1 - malditof_mass) %>%
+    mutate(error_ppm = error_mass/mass1 * 1e6)
 
   if (aug_deam) {
     msg_aug = paste0(
@@ -193,7 +202,7 @@ ccf_data = function(ts, data, txlim, myby, gauss) {
 #' @export
 #'
 #' @examples
-max_cc = function(rs_data, laglim, myby){
+max_cc = function(rs_data, laglim, myby, mass1){
 
   mylagmax = laglim/myby
 
@@ -203,10 +212,13 @@ max_cc = function(rs_data, laglim, myby){
   lag = ccd$lag[,,1]
 
   max_idx = which.max(cor)
+  lag = round(lag[max_idx] * myby, 3)
+  err_ppm = lag/mass1 * 1e6
 
   out = data.frame(
     cor = round(cor[max_idx], 3),
-    lag = round(lag[max_idx] * myby, 3)
+    lag = lag,
+    err_ppm = err_ppm
   )
 
   return(out)
@@ -222,14 +234,15 @@ max_cc = function(rs_data, laglim, myby){
 #' @param myby
 #' @param gauss
 #' @param laglim
+#' @param ...
 #'
 #' @return
 #' @importFrom bacollite ms_subrange ms_iso
 #' @export
 #'
 #' @examples
-align_sample = function(s, markers, myby, gauss, laglim, halfWindowSize){
-  s = smoothIntensity(s, 'SavitzkyGolay', halfWindowSize)
+align_sample = function(s, markers, myby, gauss, laglim, ...){
+  s = smoothIntensity(s, ...)
   s = as.matrix(s)
   markers = markers[, c('seq', 'ndeam', 'nhyd', 'pept')]
   markers_list = split(markers, seq(nrow(markers)))
@@ -241,12 +254,12 @@ align_sample = function(s, markers, myby, gauss, laglim, halfWindowSize){
       moff = 1.5
       lbl = min(ts$mass) - moff
       ubl = max(ts$mass) + moff
-      myxlim = c(lbl,ubl)
+      myxlim = c(lbl, ubl)
       subms = ms_subrange(s, lbl, ubl)
 
       rs_data = ccf_data(ts, subms, myxlim, myby=myby, gauss=gauss)
 
-      al_cor =  max_cc(rs_data, myby=myby, laglim=laglim)
+      al_cor =  max_cc(rs_data, myby=myby, laglim=laglim, mass1=ts$mass[1])
       al_cor$pept = p$pept
       return(al_cor)
     },
@@ -262,7 +275,6 @@ align_sample = function(s, markers, myby, gauss, laglim, halfWindowSize){
 #' @param data_path
 #' @param ncores
 #' @param metadata
-#' @param mat_format
 #' @param nchunks
 #' @param iocores
 #' @param vch
@@ -272,51 +284,31 @@ align_sample = function(s, markers, myby, gauss, laglim, halfWindowSize){
 #' @export
 #'
 #' @examples
-get_max_cor = function(markers, data_path, metadata, mat_format,
+get_max_cor = function(markers, data_path, metadata,
                        nchunks, ncores, iocores, vch = 5, ...){
 
-  if (missing(mat_format)){
-    mat_format = 'wide'
-  }
   prepf = prepFun(align_sample, markers = markers_zooms, ...)
   spectra = paste0(metadata$sample_name, "_", metadata$replicate)
   cor_data = preprocessData(
     indir = data_path, readf = 'mzml', nchunks = nchunks, prepf = prepf,
     spectra = spectra, ncores = ncores, iocores = iocores, vch=vch)
 
-  if (mat_format == 'wide') {
-    cors = lapply(cor_data, function(x) unlist(lapply(x, function(x) x$cor)))
-    cors = do.call(rbind, cors)
-    # rownames(cors) = sapply(strsplit(rownames(cors), '\\.'), '[[', 1)
-    cors = cors[paste0(metadata$sample_name, '_', metadata$replicate), ]
-    colnames(cors) = markers$pept
-
-    lags = lapply(cor_data, function(x) unlist(lapply(x, function(x) x$lag)))
-    lags = do.call(rbind, lags)
-    # rownames(lags) = sapply(strsplit(rownames(lags), '\\.'), '[[', 1)
-    lags = lags[paste0(metadata$sample_name, '_', metadata$replicate), ]
-    colnames(lags) = markers$pept
-    return(list(cors, lags))
-
-  } else if (mat_format == 'long') {
-    cor_data = mapply(
-      function(x, n) {
-        d = mapply(
-          function(x, n){
-            # x$pept = n
-            x
-          }, x, names(x), SIMPLIFY = FALSE, USE.NAMES = FALSE)
-        d = do.call(bind_rows, d)
-        # s = strsplit(strsplit(n, "\\.")[[1]][1], "_")[[1]]
-        s = strsplit(n, "_")[[1]]
-        d$sample_name = s[1]
-        d$replicate = s[2]
-        d
-      }, cor_data, names(cor_data), SIMPLIFY = FALSE)
-    cor_data = do.call(bind_rows, cor_data)
-    return(cor_data)
-  }
-
+  cor_data = mapply(
+    function(x, n) {
+      d = mapply(
+        function(x, n){
+          # x$pept = n
+          x
+        }, x, names(x), SIMPLIFY = FALSE, USE.NAMES = FALSE)
+      d = do.call(bind_rows, d)
+      # s = strsplit(strsplit(n, "\\.")[[1]][1], "_")[[1]]
+      s = strsplit(n, "_")[[1]]
+      d$sample_name = s[1]
+      d$replicate = s[2]
+      d
+    }, cor_data, names(cor_data), SIMPLIFY = FALSE)
+  cor_data = do.call(bind_rows, cor_data)
+  return(cor_data)
 
 }
 
@@ -329,7 +321,7 @@ get_max_cor = function(markers, data_path, metadata, mat_format,
 #' @param myby
 #' @param gauss
 #' @param laglim
-#' @param halfWindowSize
+#' @param ...
 #'
 #' @return
 #' @importFrom bacollite ms_subrange ms_iso
@@ -337,9 +329,9 @@ get_max_cor = function(markers, data_path, metadata, mat_format,
 #' @export
 #'
 #' @examples
-align_sample_full = function(s, markers, myby, gauss, laglim, halfWindowSize) {
+align_sample_full = function(s, markers, myby, gauss, laglim, ...) {
   # Smoothing
-  s = smoothIntensity(s, 'SavitzkyGolay', halfWindowSize)
+  s = smoothIntensity(s, ...)
   s = as.matrix(s)
   markers = markers[, c('seq', 'ndeam', 'nhyd', 'pept')]
   markers_list = split(markers, seq(nrow(markers)))
@@ -357,7 +349,7 @@ align_sample_full = function(s, markers, myby, gauss, laglim, halfWindowSize) {
       rs_data = ccf_data(ts, subms, myxlim, myby=myby, gauss=gauss)
       rs_data$pept = p$pept
 
-      al_cor =  max_cc(rs_data, myby=myby, laglim=laglim)
+      al_cor =  max_cc(rs_data, myby=myby, laglim=laglim, mass1=ts$mass[1])
       al_cor$pept = p$pept
 
       rs_data$x_lag = rs_data$x + al_cor$lag
@@ -375,7 +367,6 @@ align_sample_full = function(s, markers, myby, gauss, laglim, halfWindowSize) {
 #' @param markers
 #' @param data_path
 #' @param metadata
-#' @param mat_format
 #' @param nchunks
 #' @param ncores
 #' @param iocores
@@ -386,12 +377,9 @@ align_sample_full = function(s, markers, myby, gauss, laglim, halfWindowSize) {
 #' @export
 #'
 #' @examples
-align_markers = function(markers, data_path, metadata, mat_format,
+align_markers = function(markers, data_path, metadata,
                          nchunks, ncores, iocores, vch = 5, ...){
 
-  if (missing(mat_format)) {
-    mat_format = 'wide'
-  }
   prepf = prepFun(align_sample_full, markers = markers_zooms, ...)
 
   spectra = paste0(metadata$sample_name, "_", metadata$replicate)
@@ -399,37 +387,21 @@ align_markers = function(markers, data_path, metadata, mat_format,
     indir = data_path, readf = 'mzml', nchunks = nchunks, prepf = prepf,
     spectra = spectra, ncores = ncores, iocores = iocores, vch=vch)
 
-  if (mat_format == 'wide') {
-    cors = lapply(alignment_data, function(x) unlist(lapply(x, function(x) x$cor$cor)))
-    cors = do.call(rbind, cors)
-    # rownames(cors) = sapply(strsplit(rownames(cors), '\\.'), '[[', 1)
-    cors = cors[paste0(metadata$sample_name, '_', metadata$replicate), ]
-    colnames(cors) = markers$pept
-
-    lags = lapply(alignment_data, function(x) unlist(lapply(x, function(x) x$cor$lag)))
-    lags = do.call(rbind, lags)
-    # rownames(lags) = sapply(strsplit(rownames(lags), '\\.'), '[[', 1)
-    lags = lags[paste0(metadata$sample_name, '_', metadata$replicate), ]
-    colnames(lags) = markers$pept
-
-    cor_data = list(cors = cors, lags = lags)
-  } else if (mat_format == 'long') {
-    cor_data = mapply(
-      function(x, n) {
-        d = mapply(
-          function(x, n){
-            # x$cor$pept = n
-            x$cor
-          }, x, names(x), SIMPLIFY = FALSE, USE.NAMES = FALSE)
-        d = do.call(bind_rows, d)
-        # s = strsplit(strsplit(n, "\\.")[[1]][1], "_")[[1]]
-        s = strsplit(n, "_")[[1]]
-        d$sample_name = s[1]
-        d$replicate = s[2]
-        d
-      }, alignment_data, names(alignment_data), SIMPLIFY = FALSE)
-    cor_data = do.call(bind_rows, cor_data)
-  }
+  cor_data = mapply(
+    function(x, n) {
+      d = mapply(
+        function(x, n){
+          # x$cor$pept = n
+          x$cor
+        }, x, names(x), SIMPLIFY = FALSE, USE.NAMES = FALSE)
+      d = do.call(bind_rows, d)
+      # s = strsplit(strsplit(n, "\\.")[[1]][1], "_")[[1]]
+      s = strsplit(n, "_")[[1]]
+      d$sample_name = s[1]
+      d$replicate = s[2]
+      d
+    }, alignment_data, names(alignment_data), SIMPLIFY = FALSE)
+  cor_data = do.call(bind_rows, cor_data)
 
   xy_data = mapply(
     function(x, n) {

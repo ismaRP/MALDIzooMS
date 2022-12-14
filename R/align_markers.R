@@ -244,7 +244,7 @@ max_cc = function(rs_data, laglim, myby, mass1){
 align_sample = function(s, markers, myby, gauss, laglim, ...){
   s = smoothIntensity(s, ...)
   s = as.matrix(s)
-  markers = markers[, c('seq', 'ndeam', 'nhyd', 'pept')]
+  markers = markers[, c('seq', 'ndeam', 'nhyd', 'pept_id')]
   markers_list = split(markers, seq(nrow(markers)))
   al = lapply(
     markers_list,
@@ -260,7 +260,7 @@ align_sample = function(s, markers, myby, gauss, laglim, ...){
       rs_data = ccf_data(ts, subms, myxlim, myby=myby, gauss=gauss)
 
       al_cor =  max_cc(rs_data, myby=myby, laglim=laglim, mass1=ts$mass[1])
-      al_cor$pept = p$pept
+      al_cor$pept_id = p$pept_id
       return(al_cor)
     },
     s, myby, gauss, laglim)
@@ -333,7 +333,7 @@ align_sample_full = function(s, markers, myby, gauss, laglim, ...) {
   # Smoothing
   s = smoothIntensity(s, ...)
   s = as.matrix(s)
-  markers = markers[, c('seq', 'ndeam', 'nhyd', 'pept')]
+  markers = markers[, c('seq', 'ndeam', 'nhyd', 'pept_id')]
   markers_list = split(markers, seq(nrow(markers)))
   al = lapply(
     markers_list,
@@ -347,10 +347,10 @@ align_sample_full = function(s, markers, myby, gauss, laglim, ...) {
       subms = ms_subrange(s, lbl, ubl)
 
       rs_data = ccf_data(ts, subms, myxlim, myby=myby, gauss=gauss)
-      rs_data$pept = p$pept
+      rs_data$pept_id= p$pept_id
 
       al_cor =  max_cc(rs_data, myby=myby, laglim=laglim, mass1=ts$mass[1])
-      al_cor$pept = p$pept
+      al_cor$pept_id = p$pept_id
 
       rs_data$x_lag = rs_data$x + al_cor$lag
 

@@ -4,10 +4,10 @@
 \alias{align_sample_full}
 \title{Title}
 \usage{
-align_sample_full(s, markers, myby, gauss, laglim, halfWindowSize)
+align_sample_full(s, markers, myby, gauss, laglim, ...)
 }
 \arguments{
-\item{halfWindowSize}{}
+\item{...}{}
 }
 \description{
 Title

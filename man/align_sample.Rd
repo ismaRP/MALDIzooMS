@@ -4,14 +4,14 @@
 \alias{align_sample}
 \title{Title}
 \usage{
-align_sample(s, markers, myby, gauss, laglim, halfWindowSize)
+align_sample(s, markers, myby, gauss, laglim, ...)
 }
 \arguments{
 \item{s}{MassSpectrum object}
 
 \item{markers}{markers data frame}
 
-\item{laglim}{}
+\item{...}{}
 }
 \description{
 Title

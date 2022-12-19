@@ -8,7 +8,6 @@ get_max_cor(
   markers,
   data_path,
   metadata,
-  mat_format,
   nchunks,
   ncores,
   iocores,

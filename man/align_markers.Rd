@@ -8,7 +8,6 @@ align_markers(
   markers,
   data_path,
   metadata,
-  mat_format,
   nchunks,
   ncores,
   iocores,

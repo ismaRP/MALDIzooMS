@@ -53,7 +53,8 @@ pept_fly = function(markers, peaks, peaksby=NULL, tolerance=0.002,
 
   # Align peaks
   al_peaks = custom_alignPeaks(
-    peaks, reference=ref_peaks, tolerance = tolerance, allowNoMatches=T)
+    peaks, reference=ref_peaks, tolerance = tolerance,
+    allowNoMatches=T, emptyNoMatches=T)
   # Final bin peaks, relaxed
   bin_peaks = binPeaks(al_peaks, method = 'strict', tolerance = tolerance)
   mip_peaks = monoisotopicPeaks(bin_peaks, minCor=0.9)

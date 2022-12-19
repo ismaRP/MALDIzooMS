@@ -4,7 +4,7 @@
 \alias{max_cc}
 \title{Title}
 \usage{
-max_cc(rs_data, laglim, myby)
+max_cc(rs_data, laglim, myby, mass1)
 }
 \arguments{
 \item{myby}{}

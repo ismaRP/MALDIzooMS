@@ -10,6 +10,7 @@ pept_fly(
   peaksby = NULL,
   tolerance = 0.002,
   match_tol = 0.6,
+  match_tol_unit = c("Da", "ppm"),
   aug_deam = F
 )
 }

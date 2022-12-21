@@ -92,10 +92,10 @@ pept_fly = function(markers, peaks, peaksby=NULL, tolerance=0.002,
 
   if (aug_deam) {
     msg_aug = paste0(
-      'Setting MALDI-TOF fraction of different deamidated\n',
+      'Setting fraction of different deamidated ',
       'versions of peptides to the maximum found'
     )
-    cat(msg_aug)
+    message(msg_aug)
     markers = augment_deam(markers)
   }
   if (is.null(peaksby)) {

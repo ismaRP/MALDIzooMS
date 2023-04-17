@@ -1,13 +1,14 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# MALDIutils
+# MALDIZooMS
 
 <!-- badges: start -->
-
 <!-- badges: end -->
 
-The goal of MALDIutils is to …
+A package to manage large datasets of ZooMS MALDI data, change format,
+collect from platemap coordinates. Preprocess the spectra and align
+markers.
 
 ## Installation
 
@@ -15,7 +16,7 @@ Install the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("ismaRP/MALDIutils")
+devtools::install_github("ismaRP/MALDIzooMS")
 ```
 
 ## Example
@@ -23,6 +24,56 @@ devtools::install_github("ismaRP/MALDIutils")
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
-library(MALDIutils)
-## basic example code
+library(MALDIzooMS)
+
+platemap = read_csv('path/to/platemap.csv')
+
+platemap_1 = collect_triplicates(
+  platemap,
+  basepath = 'path/to/data', ext = "txt",
+  outfolder = 'path/to/triplicates/folder',
+  keep_dupl = T, keep_incomplete_tripl = T, dry_run=F)
+
+platemap_1 = platemap_1 %>% filter(exists)
+
+change_format_chunks(
+  spectra_names = paste0(platemap_1$sample_name, "_", platemap_1$replicate),
+  indir = 'path/to/triplicates/folder', in_fmt = 'txt', readf = "fread",
+  outpath = 'path/to/formatted/data', writef = "mzML",
+  mc.cores = 8, nchunks = 20)
+
+# Define custom preprocessing function
+prep_pipeline = function(s, smooth_method = 'SavitzkyGolay', hws_smooth = 8,
+                         iterations=20, SNR = 0, halfWindowSize = 20){
+
+  # Transform Intensity
+  s = transformIntensity(s, 'sqrt')
+
+  # Smoothing
+  s = smoothIntensity(s, smooth_method, hws_smooth)
+
+  # Remove baseline; get the estimated baseline
+  b = estimateBaseline(s, method='SNIP', iterations=iterations)
+  s@intensity = s@intensity - b[,2]
+
+  b_slope = get_baseline_slope(b)
+  s@metaData$prepQC = b_slope
+  # Normalize Intensity
+  s = calibrateIntensity(s, method="TIC")
+
+  s = peaksLocalBG(s, halfWindowSize = halfWindowSize, SNR=SNR, mass_range = 100,
+                   bg_cutoff = 0.5, l_cutoff = 1e-15)
+  return(s)
+}
+
+# Prepare function with preloaded parameters (R closure)
+prepf = prepFun(prep_pipeline, smooth_method = 'SavitzkyGolay', hws_smooth = 8,
+                iterations=150, SNR = 0, halfWindowSize = 20)
+
+peaks = preprocessData(
+  indir = 'path/to/formatted/data', readf = 'mzml',
+  nchunks = 20, prepf = prepf, ncores = 8, iocores = 1)
+
+# Save peaks into a much smaller, single and manageable Rds file
+saveRDS(peaks, 'path/to/peaks.Rds')
 ```

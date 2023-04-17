@@ -151,6 +151,7 @@ augment_deam = function(markers){
 #' @param gauss
 #'
 #' @return
+#' @importFrom stats approx ksmooth
 #' @export
 #'
 #' @examples
@@ -200,6 +201,7 @@ ccf_data = function(ts, data, txlim, myby, gauss) {
 #' @param myby
 #'
 #' @return
+#' @importFrom stats ccf
 #' @export
 #'
 #' @examples

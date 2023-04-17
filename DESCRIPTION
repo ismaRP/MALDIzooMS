@@ -1,13 +1,13 @@
-Package: MALDIutils
+Package: MALDIzooMS
 Type: Package
-Title: Manage big sets of ZooMS MALDI data
+Title: Manage and analyze large MALDI datasets for ZooMS
 Version: 0.1.0
 Author: c(person("Ismael", "Rodriguez", role=c("aut", "cre"),
         email="ismael@palaeome.org",
         comment=c(ORCID="0000-0001-5313-9709")))
 Maintainer: Ismael Rodriguez <ismael@palaeome.org>
-Description: Manage big datasets of ZooMS MALDI data, change format,
-    and collect from platemap. Reads and processes data in chunks.
+Description: A package to manage large datasets of ZooMS MALDI data, change format,
+    collect from platemap coordinates. Preprocess the spectra and align markers.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -25,7 +25,8 @@ Imports:
     MALDIrppa,
     bacollite,
     MASS,
-    readr
+    readr,
+    stats
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

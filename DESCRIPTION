@@ -25,8 +25,12 @@ Imports:
     bacollite,
     MASS,
     stats
+URL: https://github.com/ismaRP/MALDIzooMS
+BugReports: https://github.com/ismaRP/MALDIzooMS/issues
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Depends: 
     R (>= 3.6)
+Remotes:
+    github::ismaRP/bacollite

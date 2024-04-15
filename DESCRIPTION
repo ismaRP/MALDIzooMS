@@ -11,7 +11,7 @@ Description: A package to manage large datasets of ZooMS MALDI data, change form
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.1
 Imports: 
     MALDIquantForeign,
     MALDIquant,
@@ -24,7 +24,11 @@ Imports:
     parallel,
     bacollite,
     MASS,
-    stats
+    stats,
+    Spectra,
+    MsCoreUtils,
+    signal,
+    robustbase
 URL: https://github.com/ismaRP/MALDIzooMS
 BugReports: https://github.com/ismaRP/MALDIzooMS/issues
 Suggests: 

@@ -61,8 +61,6 @@
 #'   outfolder = 'path/to/samples',
 #'   keep_dupl = T, keep_incomplete_tripl = T, dry_run=F)
 #' }
-
-
 collect_triplicates = function(platemap, format=c('wide', 'long'), basepath="", ext=NULL, outfolder=NULL,
                                keep_dupl=T, keep_incomplete_tripl=T, dry_run=F) {
 
@@ -131,4 +129,67 @@ collect_triplicates = function(platemap, format=c('wide', 'long'), basepath="", 
   return(platemap)
 
 }
+
+
+#' Extract spectra name from dataOrigin slot of Spectra object
+#'
+#' @param files Path to a individual spectrum file including the file name and extension
+#'
+#' @return
+#' @export
+#' @importfrom fs path_files
+#'
+#' @examples
+get_spectra_name = function(files){
+  files = strsplit(fs::path_file(files), '\\.')
+  spectra_name = sapply(files, '[[', 1)
+
+  return(spectra_name)
+}
+
+
+
+#' Separate file names into sample and replicate
+#'
+#' @param spectra_names Spectra names
+#' @param sep Separator of sample name and replicate. Default is '_'
+#'
+#' @return
+#' @export
+#'
+#' @examples
+separate_sample_replicate = function(spectra_names, sep='_'){
+  parts = strsplit(spectra_names, '_')
+  samples = sapply(parts, function(x) paste0(x[-length(x)], collapse='_'))
+  replicates = sapply(parts, function(x) x[[length(x)]])
+
+  return(data.frame(sample=samples, replicate=replicates))
+  # ((?:[a-zA-Z1-9]+_*[a-zA-Z1-9]*)*?)(_)(\d)$
+
+}
+
+
+#' Separate spectra_name column into sample and replicate
+#'
+#' @param sp data.frame with data, in which the spectra name is in 'spectra_name'
+#'           column
+#' @param sample_sep
+#' @param repl_seq
+#'
+#' @return
+#' @export
+#'
+#' @examples
+separate_sample_replicate_df = function(sp, sample_sep='_', repl_sep='_'){
+  sample_sep = paste0(sample_sep, collapse='')
+  separated = separate_wider_regex(
+    sp, spectra_name,
+    patterns=c('sample'=sprintf('(?:[a-zA-Z1-9]+(?:[%s][a-zA-Z1-9])*)*?', sample_sep),
+               repl_sep,
+               'replicate'='\\d$'),
+    cols_remove=FALSE)
+  return(separated)
+}
+
+
 

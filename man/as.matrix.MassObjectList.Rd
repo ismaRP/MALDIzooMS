@@ -4,7 +4,7 @@
 \alias{as.matrix.MassObjectList}
 \title{Title}
 \usage{
-as.matrix.MassObjectList(l)
+\method{as.matrix}{MassObjectList}(l)
 }
 \arguments{
 \item{l}{}

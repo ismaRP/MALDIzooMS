@@ -1,53 +1,259 @@
 
+
+
+#' Quality control spectra from [MALDIrppa::screenSpectra]
+#' Works on peak matrix rather than on [MALDIquant::MassSpectrum]
+#' @param x
+#'
+#' @return numeric, Atipicality score
+#' @export
+#' @importFrom signal sgolayfilt
+#' @importFrom robustbase Qn
+#' @importFrom stats median
+#' @examples
+atipicality_spectra = function(x, ...){
+  smax = 100
+  nd = 1
+  lambda = 0.5
+  est = x[,2]/max(x[,2])/smax
+  est = sgolayfilt(est, m = nd)
+  est = Qn(est)
+  med.int = round(median(x[,2]), 4)
+  est = (est^lambda)*(1/sqrt((med.int+1)))^(1-lambda)
+
+  return(est)
+}
+
+
+#' Identification of potentially low-quality raw mass spectra
+#'
+#' Uses [qc_spectra], which implements [MALDIrppa::screenSpectra()] on
+#' peak matrx
+#' @param object [Spectra::Spectra()] object
+#'
+#' @return
+#' @export
+#' @importFrom Spectra addProcessing
+#' @examples
+screen_spectra = function(object){
+  qcA = addProcessing(sps_mzr, atipicality_spectra)
+  qcA = unlist(peaksData(qcA))
+
+  sps_mzr$Atipicality = qcA
+  l = qc_limits(sps_mzr$Atipicality)
+
+  sps_mzr$QCflag = 'QC_pass'
+  sps_mzr$QCflag[sps_mzr$Atipicality > l[1] | sps_mzr$Atipicality < l[2]] = 'QC_fail'
+
+  sps_mzr = reset(sps_mzr)
+
+  return(sps_mzr)
+}
+
+
+
+
+
+#' Title
+#'
+#' @param A vector of A scores from QC
+#'
+#' @return Vector with top and bottom limits
+#' @export
+#' @importFrom robustbase adjboxStats
+#'
+#' @examples
+qc_limits = function(A) {
+  threshold = 1.5
+  QClimits = adjboxStats(A, coef = threshold)$fence[c(2,1)]
+  return(QClimits)
+}
+
+
+#' Change desired intensity column in 2nd column
+#'
+#' Many methods automatically pick the 2nd column as the intensity to
+#' do operations. With this function we can swap the intensity columns to have
+#' the desired one in the 2nd column
+#' @param x Matrix of peaks
+#' @param int_index Column index of the intensity
+#'
+#' @return
+#' @export
+#'
+#' @examples
+int_col2 = function(x, int_index=4, ...) {
+  # Swap intensity
+  tmp = x[,2]
+  x[, 2] = x[,int_index]
+  x[, int_index] = tmp
+  # Swap colnames
+  tmp_colname = colnames(x)[2]
+  colnames(x)[2] = colnames(x)[int_index]
+  colnames(x)[int_index] = tmp_colname
+
+  return(x)
+}
+
+
+
 #' Title
 #'
 #' @param x
-#' @param n
+#' @param halfWindowSize
+#' @param method
+#' @param snr
+#' @param k
+#' @param descending
+#' @param threshold
+#' @param int_index
 #'
-#' @return n list of vectos
-#' @export
-#'
-#' @examples
-chunks = function(x,n){
-  split(x, cut(seq_along(x), n, labels = FALSE))
-}
-
-
-
-#' prepf
-#' Pre-load spectra preprocessing function with arguments using a closure
-#'
-#' @param FUN
-#' Function to be loaded with argument in \code{...}
-#' @param ...
-#' Arguments passed to \code{FUN}
 #' @return
-#' A closure with the preprocessing function \code{FUN} and preloaded arguments
+#' @importFrom MsCoreUtils localMaxima noise refineCentroids
 #' @export
 #'
 #' @examples
-prepFun = function(FUN, ...){
-  function(s) {
-    FUN(s, ...)
+peak_detection = function(x, halfWindowSize = 2L, method = c("MAD", "SuperSmoother"),
+                         snr = 0L, k = 0L, descending = FALSE, threshold = 0,
+                         int_index=2, ...){
+  n <- noise(x[, 1L], x[, int_index], method = method)
+
+  l <- localMaxima(x[, int_index], hws = halfWindowSize)
+
+  p <- which(l & x[, int_index] > (snr * n))
+
+  if (k > 0L) {
+    mz = refineCentroids(x = x[, 1L], y = x[, int_index], p = p,
+                         k = k, threshold = threshold,
+                         descending = descending)
+    x = x[p, , drop = FALSE]
+    x[,1] = mz
+    # cbind(mz = refineCentroids(x = x[, 1L], y = x[, 2L], p = p,
+    #                            k = k, threshold = threshold,
+    #                            descending = descending),
+    #       intensity = x[p, 2L])
+  } else {
+    x = x[p, , drop = FALSE]
   }
+  return(x)
 }
+
+
+
+
+#' Baseline subtraction
+#'
+#' @param x Peak matrix
+#' @param int_index Index of the intensity to calculate the baseline
+#' @param keep_bl
+#' @param substract_index Index of the intensity column to be substracted.
+#' If NULL, there is no substraction
+#' @param in_place Replace the intensity in `substract_index` with the baseline
+#' substracted intensity
+#' @param ... Arguments passed to [bl_estim()]
+#'
+#' @return
+#' @export
+#' @importFrom MsCoreUtils estimateBaseline
+#' @examples
+baseline_correction = function(x, int_index=2, keep_bl=TRUE,
+               substract_index=2, in_place=FALSE, ...) {
+  method = list(...)$method
+  # iterations = list(...)$iterations
+  # decreasing = list(...)$decreasing
+  # b = MsCoreUtils::estimateBaseline(
+  #   x[,1], x[, int_index], method=method,
+  #   iterations=iterations, decreasing=decreasing)
+  b = MsCoreUtils::estimateBaseline(
+    x[,1], x[, int_index], method=method)
+  # Substract baseline
+  if (!is.null(substract_index)){
+    subs_int = x[, substract_index, drop=FALSE] - b
+    if (is.character(substract_index)){
+      colnames(subs_int) = paste0(
+        substract_index, '_bl_corr_', method)
+    } else if (is.integer(substract_index)) {
+      colnames(subs_int) = paste0(
+        colnames(x)[substract_index], '_bl_corr_', method)
+    }
+
+    if (in_place) {
+      x[, substract_index] = subs_int
+      # colnames(x)[substract_index] = paste0(
+      #   colnames(x)[substract_index], '_bl_corr_', method)
+    } else {
+      x = cbind(x, subs_int)
+      # colnames(x)[ncol(x)] = paste0(
+      #   colnames(x)[ncol(x)], '_bl_corr_', method)
+    }
+  }
+  # Keep baseline or not
+  if (keep_bl){
+    x = cbind(x, b)
+    colnames(x)[ncol(x)] = paste0('baseline_', method)
+  }
+  return(x)
+}
+
+
+#' Title
+#'
+#' @param x
+#' @param method
+#' @param hws
+#' @param k
+#'
+#' @return
+#' @export
+#' @importFrom MsCoreUtils smooth coefMA coefWMA coefSG
+#' @examples
+smooth = function(x,
+                  method=c('MovingAverage', 'WeightedMovingAverage', 'SavitzkyGolay'),
+                  hws=4L, k=3L, int_index=2, in_place=FALSE, ...){
+  method <- match.arg(method)
+  switch(
+    method,
+    MovingAverage={
+     coefs = coefMA(hws)
+    },
+    WeightedMovingAverage={
+     coefs = coefWMA(hws)
+    },
+    SavitzkyGolay={
+     coefs = coefSG(hws, k)
+    }
+  )
+  int_vals = x[, int_index]
+  smoothed_int = MsCoreUtils::smooth(int_vals, coefs)
+  if (in_place){
+    x[, int_index] = smoothed_int
+  } else {
+    x = cbind(x, smoothed_int)
+    colnames(x)[ncol(x)] = paste0('intensity_', method)
+  }
+  return(x)
+
+}
+
+
 
 #' peptidePseudoClusters
 #'
-#' Extracts pseudo envelopes from given peptide masses
-#'
-#' @param x \code{\link[MALDIquant]{MassPeaks}} object
-#' @param masses
-#' 1D Vector of isotopic masses to search.
-#' See examples for how to generate from a vector of single peptide masses
+#' Extracts pseudo envelopes from given monoisotopic peptide masses
+#' It just checks whether the monoisotopic peaks and subsequent peaks
+#' at distance of 1.00235 are present, between min_isopeaks and n_isopeaks.
+#' It also check there are no gaps. It doesn't check the isotopic envelop shape.
+#' @param x Peaks matrix object
+#' @param mono_masses Monoisotopic masses
 #' @param tol
 #' @param n_isopeaks
 #' @param min_isopeaks
+#' @param ...
 #'
-#' @return data.frame with mass, intensity and s2n values for pseudo-isotopic
-#'         clusters
+#' @return Peaks matrix with isotopic masses and NA as place holders for when
+#' there is no match
 #' @export
-#' @importFrom MALDIquant match.closest
+#' @importFrom MsCoreUtils closest
 #'
 #' @examples
 #' masses = c(100, 200, 300)
@@ -57,23 +263,25 @@ prepFun = function(FUN, ...){
 #' masses = masses + (d * 0L:(n_isopeaks - 1L))
 #' masses = sort(masses)
 #' print(masses)
+peptide_pseudo_clusters = function(x, mono_masses, tol, n_isopeaks, min_isopeaks, ...){
 
+  # Create isotopic masses from monoisotopic peptide masses
+  npepts = length(mono_masses)
+  masses = matrix(mono_masses, nrow = n_isopeaks, ncol = length(mono_masses), byrow = T)
+  d = 1.00235
+  masses = masses + (d * 0L:(n_isopeaks - 1L))
+  masses = sort(masses)
+  # Empty matrix with selected masses and intensities
+  sel_matrix = matrix(nrow=length(masses), ncol=ncol(x))
+  # Run closest function to match x and isotopic masses
+  idx = closest(x[,1], masses, tolerance = x[,1]*tol)
 
-
-peptidePseudoClusters = function(x, masses, tol, n_isopeaks, min_isopeaks){
-  n_pepts = length(masses)/n_isopeaks
-
-  sel_masses = rep(NA, length(masses))
-  sel_int = rep(NA, length(masses))
-  sel_snr = rep(NA, length(masses))
+  # Vector to control for isotopic pattern completness
   sel_complete = rep(F, length(masses))
-  idx = match.closest(x@mass, masses, tolerance = tol*masses)
-
   sel_complete[idx[!is.na(idx)]] = T
-
   sel_complete = split(sel_complete,
-                       cut(seq_along(sel_complete), n_pepts, labels = FALSE))
-
+                       cut(seq_along(sel_complete), npepts, labels = FALSE))
+  # If it has a gap or is shorter than min_isopeaks we will just ignore it
   sel_complete = lapply(
     sel_complete,
     function(x){
@@ -87,34 +295,22 @@ peptidePseudoClusters = function(x, masses, tol, n_isopeaks, min_isopeaks){
       }
     }
   )
-
   sel_complete = Reduce(c, sel_complete)
-  sel_masses[idx[!is.na(idx)]] = x@mass[!is.na(idx)]
-  sel_masses[!sel_complete] = NA
-  sel_int[idx[!is.na(idx)]] = x@intensity[!is.na(idx)]
-  sel_int[!sel_complete] = NA
-  sel_snr[idx[!is.na(idx)]] = x@snr[!is.na(idx)]
-  sel_snr[!sel_complete] = NA
-  return(data.frame(mass=sel_masses, intensity=sel_int, snr=sel_snr))
+  # Put selected masses in place in sel_matrix and keep only complete patterns
+  sel_matrix[idx[!is.na(idx)], ] = x[!is.na(idx),]
+  sel_matrix[!sel_complete, ] = NA
+  sel_matrix[,1] = masses
+  colnames(sel_matrix) = colnames(x)
+  return(sel_matrix)
 }
 
 
 
-pseudoClusters = function(x, ...){
-  prep_args = list(...)
-  masses = prep_args$masses
-  tol = prep_args$tol
-  n_isopeaks = prep_args$n_isopeaks
 
-  # TODO: finish from MALDIquant
-}
-
-
-
-#' modelLocalBG
+#' Model local backgroung noise around peak
 #'
 #' @param p
-#' Matrix, mass-intensity pair
+#' One row matrix, mass-intensity pair
 #' @param m
 #' Full matrix of mass-intensity pairs
 #' @param mass_range
@@ -133,7 +329,7 @@ pseudoClusters = function(x, ...){
 #' @export
 #'
 #' @examples
-modelLocalBG = function(p, full_m, mass_range, bg_cutoff){
+model_local_bg = function(p, full_m, mass_range, bg_cutoff){
 
   # Get masses around
   bgmask = (full_m[,1] < (p[1] + mass_range)) & (full_m[,1] > (p[1] - mass_range))
@@ -159,7 +355,6 @@ modelLocalBG = function(p, full_m, mass_range, bg_cutoff){
   chsq = sum((co-ce)^2/ce)
   pval = 1 - pchisq(chsq, length(bg)-1)
 
-
   l = pnorm(p[2], mean = fit$estimate[1], sd = fit$estimate[2], lower.tail = F)
 
   return(matrix(c(l, fit$loglik, pval), nrow=1))
@@ -167,14 +362,10 @@ modelLocalBG = function(p, full_m, mass_range, bg_cutoff){
 }
 
 
-#' peaksLocalBG
+#' Filter a peak list based on likelihood that peaks are above background local
+#' noise
 #'
-#' @param s
-#' \code{\link[MALDIquant]{MassSpectra}} object
-#' @param halfWindowSize
-#' Half-window size parameter for local maximum detection. Passed to \code{\link[MALDIquant]{detectPeaks}}
-#' @param SNR
-#' Signal to noise threshold for peak detection. Passed to \code{\link[MALDIquant]{detectPeaks}}
+#' @param x Peaks matrix
 #' @param mass_range
 #' Mass window to both sides of a peak to be considered for backgroun modelling
 #' @param bg_cutoff
@@ -185,23 +376,18 @@ modelLocalBG = function(p, full_m, mass_range, bg_cutoff){
 #' Likelihood threshold or p-value. Peaks with a probability of being modelled as
 #' background noise higher than this are filtered out.
 #' @return
-#' @importFrom MALDIquant detectPeaks as.matrix
 #' @export
 #'
 #' @examples
-peaksLocalBG = function(s, halfWindowSize, mass_range, bg_cutoff, l_cutoff, SNR=0){
+peaks_local_bg = function(x, mass_range, bg_cutoff, l_cutoff, SNR=0, ...){
 
-  s = detectPeaks(s, method="SuperSmoother", SNR=SNR,
-                  halfWindowSize=halfWindowSize)
-
-  total_peaks = length(s)
+  total_peaks = nrow(x)
   m = as.matrix(s)
-  snr_values = s@snr
 
   l_values = apply(
-    X=m, MARGIN=1,
+    X=x, MARGIN=1,
     FUN=modelLocalBG,
-    full_m=m, mass_range=mass_range, bg_cutoff=bg_cutoff)
+    full_m=x, mass_range=mass_range, bg_cutoff=bg_cutoff)
   l_values = t(l_values)
 
   adj_pval = p.adjust(l_values[,1], 'holm')
@@ -211,131 +397,12 @@ peaksLocalBG = function(s, halfWindowSize, mass_range, bg_cutoff, l_cutoff, SNR=
   colnames(l_values) = c("bg_lik", "fit_loglik", "chsq_pval", "bg_adjlik")
 
   peaks_mask = l_values[,1] < l_cutoff
-  m = m[peaks_mask, ]
-  m = cbind(m, snr_values[peaks_mask])
-  non_bg_peaks = nrow(m)
+  x = x[peaks_mask, ]
+
+  non_bg_peaks = nrow(x)
   frac_rem = non_bg_peaks/total_peaks
 
-  p = createMassPeaks(
-    m[,1], m[,2], m[,3],
-    metaData = s@metaData)
-  p@metaData$fitting = l_values[peaks_mask, ]
-  p@metaData$prepQC$frac_rem = frac_rem
-  return(p)
+  return(x)
 }
-
-
-
-
-#' preprocessData
-#'
-#' Performs smoothening, baseline removal and peak detection on MALDI samples.
-#'
-#' @param indir Folder containing spectra.
-#' @param readf
-#' A string value. choose function to use to read spectra.
-#' Currently restricted to one of "fread", "table" or "mzml"
-#' @param sep
-#' Separator character for input files
-#' @param nchunks
-#' Number of chunks all the spectra should be divided into for reading and
-#' processing. If all spectra is loaded and processed at once, i.e. nchunks=1,
-#' it can overload RAM memory. If nchunks>1 data is loaded and processed to the
-#' much lighter list of peaks in chunks batches.
-#' @param prepf
-#' Custom preprocessing function
-#' @param spectra
-#' Subset of spectra from \code{indir} to analyze. Without extension.
-#' If \code{NULL} (default), all spectra is processed.
-#' @param ncores
-#' Number of cores used for the preprocessing of spectra. The cores will work in
-#' parallel with the different spectra within a chunk.
-#' @param iocores
-#' Number of cores used for I/O operations. For some systems I/O operations involving
-#' multiple cores reading or writing at the same time from disk increases time.
-#' @param vch
-#' Every how many chuncks progress is reported
-#' @return A list of objects returned by prepf
-#'
-#' @importFrom parallel mcmapply detectCores mclapply
-#' @export
-#' @details
-#' When using \code{"fread"} as the reading function, we can specify the separator \code{sep}.
-#' \code{"table"} is only advised for cases where the separator is variable and
-#' can be one or more spaces or tabs. See \code{\link[utils]{read.table}}.
-#' \code{"fread"} uses internally \code{\link[data.table]{fread}}, which is faster.
-#' \code{"mzml"} uses internally \code{\link[MALDIquantForeign]{importMzMl}}
-#' @examples
-preprocessData = function(indir, readf = c("fread", "table", "mzml"), sep=NULL,
-                          nchunks = 50, prepf = NULL, spectra = NULL,
-                          ncores = NULL, iocores = 1, vch = 5){
-  if (is.null(ncores)){
-    ncores = detectCores() - 2
-  } else {
-    ncores = min(detectCores() - 2, ncores)
-  }
-
-  cat("Using ", ncores, " cores\n")
-  readf = match.arg(readf)
-  switch(EXPR=readf,
-         "fread" = {
-           read_f = function(sep){
-             function(f) importTsv(f, sep)
-           }
-           read_f = read_f(sep)
-         },
-         "table" = {
-           read_f = importTable
-         },
-         "mzml" = {
-           read_f = import_file.MzMl
-
-         }
-  )
-
-  spectra_f = list.files(indir)
-  # Remove extension
-  spectra_f = strsplit(spectra_f, "\\.")
-  ext = spectra_f[[1]][2]
-  spectra_f = sapply(spectra_f, "[[", 1)
-  if (!is.null(spectra)) {
-    spectra_f = spectra_f[spectra_f %in% spectra]
-  }
-
-  if (nchunks > 1) {
-    spectra_chunks = chunks(spectra_f, nchunks)
-  } else {
-    spectra_chunks = list(spectra_f)
-  }
-  names(spectra_chunks) = NULL
-
-  peaks = mapply(
-    function(x, ch, ext){
-      if (ch %% vch == 0){
-        cat(sprintf('Chunk %i of %i', ch, nchunks), "\n")
-      }
-      infiles = file.path(indir, paste0(x, '.', ext))
-      l = mclapply(
-        infiles,
-        read_f,
-        mc.cores=iocores,
-        mc.silent=T
-      )
-      names(l) = x
-      invisible(mcmapply(
-        prepf, l,
-        mc.cores=ncores, SIMPLIFY = F
-      ))
-    },
-    spectra_chunks,
-    seq_along(spectra_chunks),
-    MoreArgs = list(ext=ext),
-    SIMPLIFY = F
-  )
-  # Unlist chunks, so all spectra are in one list of depth=1
-  peaks = unlist(peaks, recursive = F, use.names = T)
-  return(peaks)
-}
-
 
 

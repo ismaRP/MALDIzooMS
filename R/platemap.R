@@ -192,4 +192,45 @@ separate_sample_replicate_df = function(sp, sample_sep='_', repl_sep='_'){
 }
 
 
+#' Clean metadata
+#'
+#' Clean metadata so it matches the actual data files.
+#'
+#' @param metadata A data.frame with a replicate spectra per row. It must contain
+#' at least columns sample_name and replicate
+#' @param folder Folder where spectra data is stored
+#'
+#' @return data.frame metadata with extra columns \code{file},
+#' \code{spectra_name} and \code{n_replicates}
+#' @export
+#' @importFrom dplyr group_by mutate ungroup
+#'
+#' @examples
+clean_metadata = function(metadata, folder) {
+
+  spectra_files = dir(folder)
+  spectra_names = sapply(strsplit(spectra_files, '\\.'), '[[', 1)
+
+  data = data.frame(
+    spectra_name = spectra_names,
+    file = spectra_files
+  )
+
+  metadata$spectra_name = paste0(
+    metadata$sample_name, '_', metadata$replicate)
+
+  idx = match(metadata$spectra_name, data$spectra_name)
+
+  metadata$file = data[idx, 'file']
+  metadata = metadata[!is.na(metadata$file),]
+
+  metadata = metadata %>% group_by(sample_name) %>%
+    mutate(n_replicates = n()) %>% ungroup()
+
+  return(metadata)
+
+}
+
+
+
 

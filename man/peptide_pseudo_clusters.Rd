@@ -4,14 +4,14 @@
 \alias{peptide_pseudo_clusters}
 \title{peptidePseudoClusters}
 \usage{
-peptide_pseudo_clusters(x, mono_masses, tol, n_isopeaks, min_isopeaks, ...)
+peptide_pseudo_clusters(x, mono_masses, n_isopeaks, min_isopeaks, ...)
 }
 \arguments{
 \item{x}{Peaks matrix object}
 
 \item{mono_masses}{Monoisotopic masses}
 
-\item{...}{}
+\item{...}{Argumentes passed to [MsCoreUtils::closest]}
 }
 \value{
 Peaks matrix with isotopic masses and NA as place holders for when

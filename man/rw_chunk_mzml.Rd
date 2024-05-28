@@ -4,7 +4,7 @@
 \alias{rw_chunk_mzml}
 \title{Title}
 \usage{
-rw_chunk_mzml(x, ch, indir, read_f, outpath, in_fmt, fmt, nchunks)
+rw_chunk_mzml(x, ch, indir, read_f, outpath, in_fmt, pb)
 }
 \arguments{
 \item{x}{sample names}

@@ -13,7 +13,8 @@ change_format_chunks(
   writef,
   sep = "\\t",
   mc.cores = 4,
-  nchunks = 80
+  nchunks = 80,
+  verbose = NULL
 )
 }
 \arguments{

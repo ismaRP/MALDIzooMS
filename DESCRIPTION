@@ -29,6 +29,7 @@ Imports:
     MsCoreUtils,
     signal,
     robustbase,
+    fs,
     mzR
 URL: https://github.com/ismaRP/MALDIzooMS
 BugReports: https://github.com/ismaRP/MALDIzooMS/issues

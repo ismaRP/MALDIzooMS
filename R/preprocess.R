@@ -116,11 +116,11 @@ int_col2 = function(x, int_index=4, ...) {
 peak_detection = function(x, halfWindowSize = 2L, method = c("MAD", "SuperSmoother"),
                          snr = 0L, k = 0L, descending = FALSE, threshold = 0,
                          int_index=2, ...){
-  n <- noise(x[, 1L], x[, int_index], method = method)
+  n = noise(x[, 1L], x[, int_index], method = method)
 
-  l <- localMaxima(x[, int_index], hws = halfWindowSize)
+  l = localMaxima(x[, int_index], hws = halfWindowSize)
 
-  p <- which(l & x[, int_index] > (snr * n))
+  p = which(l & x[, int_index] > (snr * n))
 
   if (k > 0L) {
     mz = refineCentroids(x = x[, 1L], y = x[, int_index], p = p,
@@ -135,6 +135,8 @@ peak_detection = function(x, halfWindowSize = 2L, method = c("MAD", "SuperSmooth
   } else {
     x = x[p, , drop = FALSE]
   }
+  x = cbind(x, x[, int_index]/n)
+  colnames(x)[ncol(x)] = 'SNR'
   return(x)
 }
 
@@ -169,6 +171,7 @@ baseline_correction = function(x, int_index=2, keep_bl=TRUE,
   # Substract baseline
   if (!is.null(substract_index)){
     subs_int = x[, substract_index, drop=FALSE] - b
+
     if (is.character(substract_index)){
       colnames(subs_int) = paste0(
         substract_index, '_bl_corr_', method)
@@ -179,12 +182,8 @@ baseline_correction = function(x, int_index=2, keep_bl=TRUE,
 
     if (in_place) {
       x[, substract_index] = subs_int
-      # colnames(x)[substract_index] = paste0(
-      #   colnames(x)[substract_index], '_bl_corr_', method)
     } else {
       x = cbind(x, subs_int)
-      # colnames(x)[ncol(x)] = paste0(
-      #   colnames(x)[ncol(x)], '_bl_corr_', method)
     }
   }
   # Keep baseline or not
@@ -243,12 +242,12 @@ smooth = function(x,
 #' It just checks whether the monoisotopic peaks and subsequent peaks
 #' at distance of 1.00235 are present, between min_isopeaks and n_isopeaks.
 #' It also check there are no gaps. It doesn't check the isotopic envelop shape.
+#'
 #' @param x Peaks matrix object
 #' @param mono_masses Monoisotopic masses
-#' @param tol
 #' @param n_isopeaks
 #' @param min_isopeaks
-#' @param ...
+#' @param ... Argumentes passed to [MsCoreUtils::closest]
 #'
 #' @return Peaks matrix with isotopic masses and NA as place holders for when
 #' there is no match
@@ -263,7 +262,7 @@ smooth = function(x,
 #' masses = masses + (d * 0L:(n_isopeaks - 1L))
 #' masses = sort(masses)
 #' print(masses)
-peptide_pseudo_clusters = function(x, mono_masses, tol, n_isopeaks, min_isopeaks, ...){
+peptide_pseudo_clusters = function(x, mono_masses, n_isopeaks, min_isopeaks, ...){
 
   # Create isotopic masses from monoisotopic peptide masses
   npepts = length(mono_masses)
@@ -274,7 +273,9 @@ peptide_pseudo_clusters = function(x, mono_masses, tol, n_isopeaks, min_isopeaks
   # Empty matrix with selected masses and intensities
   sel_matrix = matrix(nrow=length(masses), ncol=ncol(x))
   # Run closest function to match x and isotopic masses
-  idx = closest(x[,1], masses, tolerance = x[,1]*tol)
+  # idx = closest(x[,1], masses, tolerance = x[,1]*tol)
+  # idx = closest(x[,1], masses, ppm=250, tolerance=0)
+  idx = closest(x[,1], masses, ...)
 
   # Vector to control for isotopic pattern completness
   sel_complete = rep(F, length(masses))
@@ -299,8 +300,11 @@ peptide_pseudo_clusters = function(x, mono_masses, tol, n_isopeaks, min_isopeaks
   # Put selected masses in place in sel_matrix and keep only complete patterns
   sel_matrix[idx[!is.na(idx)], ] = x[!is.na(idx),]
   sel_matrix[!sel_complete, ] = NA
+  delta_mass = sel_matrix[,1] - masses
   sel_matrix[,1] = masses
-  colnames(sel_matrix) = colnames(x)
+  sel_matrix = cbind(sel_matrix, delta_mass)
+
+  colnames(sel_matrix) = c(colnames(x), 'delta_mass')
   return(sel_matrix)
 }
 
@@ -379,15 +383,16 @@ model_local_bg = function(p, full_m, mass_range, bg_cutoff){
 #' @export
 #'
 #' @examples
-peaks_local_bg = function(x, mass_range, bg_cutoff, l_cutoff, SNR=0, ...){
-
-  total_peaks = nrow(x)
-  m = as.matrix(s)
+peaks_local_bg = function(x, mass_range, bg_cutoff, l_cutoff,
+                          int_index=2, ...){
+  s = cbind(x[,1, drop=F], x[,int_index, drop=F])
+  total_peaks = nrow(s)
+  # m = as.matrix(s)
 
   l_values = apply(
-    X=x, MARGIN=1,
-    FUN=modelLocalBG,
-    full_m=x, mass_range=mass_range, bg_cutoff=bg_cutoff)
+    X=s, MARGIN=1,
+    FUN=model_local_bg,
+    full_m=s, mass_range=mass_range, bg_cutoff=bg_cutoff)
   l_values = t(l_values)
 
   adj_pval = p.adjust(l_values[,1], 'holm')

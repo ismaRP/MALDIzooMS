@@ -5,7 +5,7 @@
 \title{Filter a peak list based on likelihood that peaks are above background local
 noise}
 \usage{
-peaks_local_bg(x, mass_range, bg_cutoff, l_cutoff, SNR = 0, ...)
+peaks_local_bg(x, mass_range, bg_cutoff, l_cutoff, int_index = 2, ...)
 }
 \arguments{
 \item{x}{Peaks matrix}

@@ -2,13 +2,16 @@
 % Please edit documentation in R/platemap.R
 \name{get_spectra_name}
 \alias{get_spectra_name}
-\title{Extract spectra name from dataOrigin slot of Spectra object}
+\title{Extract spectra name from a full path with extensions}
 \usage{
 get_spectra_name(files)
 }
 \arguments{
-\item{files}{Path to a individual spectrum file including the file name and extension}
+\item{files}{Paths to the individual spectra files including the file name and extension}
+}
+\value{
+A vector with sample names
 }
 \description{
-Extract spectra name from dataOrigin slot of Spectra object
+Spectra name has the format "samplename_replicate"
 }

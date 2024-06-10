@@ -2,7 +2,7 @@
 % Please edit documentation in R/preprocess.R
 \name{peak_detection}
 \alias{peak_detection}
-\title{Title}
+\title{Peak detection}
 \usage{
 peak_detection(
   x,
@@ -17,8 +17,34 @@ peak_detection(
 )
 }
 \arguments{
-\item{int_index}{}
+\item{x}{Peak matrix}
+
+\item{halfWindowSize}{Half size of the sliding window used to detect local
+maxima.}
+
+\item{method}{Method for noise estimation. Either \code{"SuperSmoother"} (default)
+or \code{"MAD"}}
+
+\item{snr}{Signal-to-noise ratio threshold above which a peak is picked}
+
+\item{k}{Parameter for [MsCoreUtils::refineCentroids]. Values to the left and right
+of a peak to be considered to refine the peak mz position}
+
+\item{descending}{Parameter for [MsCoreUtils::refineCentroids]. Only values between
+nearest valleys are used.}
+
+\item{threshold}{Parameter for [MsCoreUtils::refineCentroids], a proportion.
+Only values above this fraction of the maxima are used.}
+
+\item{int_index}{Index of the intensity in the peak matrix to be used for peak
+detection.}
+
+\item{...}{Currently not in use, required by [Spectra::addProcessing].}
+}
+\value{
+Peak matrix, only containing peaks that fullfill all criteria.
 }
 \description{
-Title
+It implements [Spectra::pickPeaks()], but allows using intensities in a given
+column in the peak matrix
 }

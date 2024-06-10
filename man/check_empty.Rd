@@ -2,13 +2,18 @@
 % Please edit documentation in R/format_spectra.R
 \name{check_empty}
 \alias{check_empty}
-\title{Title}
+\title{Check is spectra file is empty}
 \usage{
 check_empty(x, indir)
 }
 \arguments{
-\item{indir}{}
+\item{x}{File name}
+
+\item{indir}{Directory to data}
+}
+\value{
+\code{TRUE} if file has any data, \code{FALSE} if it's empty
 }
 \description{
-Title
+Check is spectra file is empty
 }

@@ -2,15 +2,32 @@
 % Please edit documentation in R/platemap.R
 \name{separate_sample_replicate}
 \alias{separate_sample_replicate}
-\title{Separate file names into sample and replicate}
+\alias{separate_sample_replicate_df}
+\title{Separate spectra names into sample name and replicate.}
 \usage{
 separate_sample_replicate(spectra_names, sep = "_")
+
+separate_sample_replicate_df(sp, sample_sep = "_", repl_sep = "_")
 }
 \arguments{
 \item{spectra_names}{Spectra names}
 
 \item{sep}{Separator of sample name and replicate. Default is '_'}
+
+\item{sp}{data.frame with data, in which the spectra name is in 'spectra_name'
+column}
+
+\item{sample_sep}{Separator found within a sample name}
+
+\item{repl_seq}{Separator between sample name and replicate number}
+}
+\value{
+\code{separate_sample_replicate} returns a new data.frame with columns
+sample and replicate
+
+\code{separate_sample_replicate_df} returns the data.frame in \code{sp}
+with sample and replicate columns
 }
 \description{
-Separate file names into sample and replicate
+Spectra names have the format sample_replicate.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/platemap.R
 \name{clean_metadata}
 \alias{clean_metadata}
-\title{Clean metadata}
+\title{Clean spectra metadata}
 \usage{
 clean_metadata(metadata, folder)
 }
@@ -17,5 +17,5 @@ data.frame metadata with extra columns \code{file},
 \code{spectra_name} and \code{n_replicates}
 }
 \description{
-Clean metadata so it matches the actual data files.
+Remove spectra in metadata that don't exist in data
 }

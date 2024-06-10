@@ -7,7 +7,7 @@
 model_local_bg(p, full_m, mass_range, bg_cutoff)
 }
 \arguments{
-\item{p}{One row matrix, mass-intensity pair}
+\item{p}{Peak as one-row matrix, mass-intensity pair}
 
 \item{mass_range}{Mass window to both sides of \code{p} to be considered for backgroun modelling}
 
@@ -19,6 +19,10 @@ and \code{bg_cutoff=0.5} would only keep the bottom half.}
 
 \item{l_cutoff}{Likelihood threshold or p-value. Peaks with a probability of being modelled as
 background noise higher than this are filtered out.}
+}
+\value{
+One-row matrix with p-value, ie., probability of a peak with a higher intensity,
+normal distribution fitting log-likelihood and p-value.
 }
 \description{
 Model local backgroung noise around peak

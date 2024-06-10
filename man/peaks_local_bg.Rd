@@ -19,6 +19,9 @@ and \code{bg_cutoff=0.5} would only keep the bottom half.}
 \item{l_cutoff}{Likelihood threshold or p-value. Peaks with a probability of being modelled as
 background noise higher than this are filtered out.}
 }
+\value{
+Peak matrix
+}
 \description{
 Filter a peak list based on likelihood that peaks are above background local
 noise

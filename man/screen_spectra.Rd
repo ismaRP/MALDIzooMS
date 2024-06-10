@@ -9,7 +9,10 @@ screen_spectra(object)
 \arguments{
 \item{object}{[Spectra::Spectra()] object}
 }
+\value{
+A [Spectra::Spectra()] object with \code{QCflag} spectrum variable added
+}
 \description{
-Uses [qc_spectra], which implements [MALDIrppa::screenSpectra()] on
-peak matrx
+Uses [atipicality_spectra], which implements [MALDIrppa::screenSpectra()] on
+peak matrix
 }

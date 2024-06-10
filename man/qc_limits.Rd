@@ -2,7 +2,7 @@
 % Please edit documentation in R/preprocess.R
 \name{qc_limits}
 \alias{qc_limits}
-\title{Title}
+\title{Calculate outlier limits for Atipicality score using [robustbase::adjboxStats]}
 \usage{
 qc_limits(A)
 }
@@ -13,5 +13,5 @@ qc_limits(A)
 Vector with top and bottom limits
 }
 \description{
-Title
+Calculate outlier limits for Atipicality score using [robustbase::adjboxStats]
 }

@@ -11,6 +11,10 @@ peptide_pseudo_clusters(x, mono_masses, n_isopeaks, min_isopeaks, ...)
 
 \item{mono_masses}{Monoisotopic masses}
 
+\item{n_isopeaks}{Number of isotopic peaks to look for}
+
+\item{min_isopeaks}{Minimum number of isotopic peaks to consider the envelope}
+
 \item{...}{Argumentes passed to [MsCoreUtils::closest]}
 }
 \value{
@@ -20,7 +24,8 @@ there is no match
 \description{
 Extracts pseudo envelopes from given monoisotopic peptide masses
 It just checks whether the monoisotopic peaks and subsequent peaks
-at distance of 1.00235 are present, between min_isopeaks and n_isopeaks.
+at distance of 1.00235 are present. There muse be between \code{min_isopeaks}
+and \code{n_isopeaks}.
 It also check there are no gaps. It doesn't check the isotopic envelop shape.
 }
 \examples{

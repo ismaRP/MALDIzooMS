@@ -2,18 +2,18 @@
 % Please edit documentation in R/preprocess.R
 \name{atipicality_spectra}
 \alias{atipicality_spectra}
-\title{Quality control spectra from [MALDIrppa::screenSpectra]
+\title{Quality control spectra from [MALDIrppa::screenSpectra()]
 Works on peak matrix rather than on [MALDIquant::MassSpectrum]}
 \usage{
 atipicality_spectra(x, ...)
 }
 \arguments{
-\item{x}{}
+\item{x}{Raw peak matrix with mz and intensities}
 }
 \value{
 numeric, Atipicality score
 }
 \description{
-Quality control spectra from [MALDIrppa::screenSpectra]
+Quality control spectra from [MALDIrppa::screenSpectra()]
 Works on peak matrix rather than on [MALDIquant::MassSpectrum]
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/preprocess.R
 \name{int_col2}
 \alias{int_col2}
-\title{Change desired intensity column in 2nd column}
+\title{Place desired intensity column in 2nd position}
 \usage{
 int_col2(x, int_index = 4, ...)
 }
@@ -10,9 +10,14 @@ int_col2(x, int_index = 4, ...)
 \item{x}{Matrix of peaks}
 
 \item{int_index}{Column index of the intensity}
+
+\item{...}{Not in use, required by [Spectra::addProcessing]}
+}
+\value{
+Peak matrix
 }
 \description{
 Many methods automatically pick the 2nd column as the intensity to
-do operations. With this function we can swap the intensity columns to have
+do operations. This function we can swap the intensity columns to have
 the desired one in the 2nd column
 }

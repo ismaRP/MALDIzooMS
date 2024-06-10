@@ -3,49 +3,55 @@
 #' @description
 #' ZooMS MALDI spectra from the same plate are usually stored in a separate
 #' folder with the plate coordinate as file name.
-#' Using a table that maps plateID and coordinate to sample name and replicate,
+#' Using a table that maps plate ID and coordinates to sample name and replicate,
 #' this function copies all the spectra into the same folder with appropriate
 #' sample name and replicate number.
 #'
 #' @param platemap
 #' Data frame mapping plate and coordinate to sample name and replicate.
-#' It must contain the following columns:
+#' It can contain the following columns:
 #' \itemize{
 #'   \item folder: main folder of group of plates.
 #'   \item subfolder: subfolder from a specific plate where spetra is stored.
 #'   \item basename: prefix of samples in the folder that is preceeded by coordinates.
 #'   \item sample_name: (preferably) unique sample name.
-#'   \item spot1, spot2, spot3: coordinates of each of the replicates.
-#'   \item date: the date each plate was spotted or analyzed.
-#'   There can be more than 3 replicates, but it always need to have this name: "spot#"
+#'   \item spot1, spot2, spot3: (for wide format) coordinates of each of the replicates.
+#'         There can be more than 3 replicates, but the column name always need
+#'         to have this format: "spot#"
+#'   \item spot: (for long format), coordinates of the replicate.
+#'   \item date (optionl): the date each plate was spotted or analyzed.
 #' }
 #'
 #' @param format
-#' Either "wide" or "long"
-#' In the wide format, each row is one sample and the coordinates of the replicates are in different columns.
-#' In the long format, each row is an individual replicate. In this case, platemap must contain a column called "replicate" with the replicate number
-#' and the column with the coordinates should be called "spot". Long format assumes no duplicates.
+#' Whether the platemap is in "wide" or "long" format.
+#' In the wide format, each row is one sample and the coordinates of the
+#' replicates are in different columns as spot1, spot2, ...
+#' In the long format, each row is an individual replicate. In this case, the
+#' platemap must contain a column called "replicate" with the replicate number
+#' and the column with the coordinates should be called "spot".
+#' Long format assumes no duplicates.
 #' @param basepath
 #' Path to plates
 #' @param ext
 #' File extension. E.g. mzML, csv, txt, tab
 #' @param keep_dupl
-#' Logical. Should duplicate samples be kept? If so, an suffix is added.
+#' Logical. Should duplicate samples/replicates be kept? If so, a suffix is added.
 #' The suffix has this form: "__#".
 #' @param keep_incomplete_tripl
 #' Logical. When samples come in triplicates, whether incomplete triplicates
-#' should be removed
+#' should be skipped.
 #' @param outfolder
-#' Destination path for renamed spectra
+#' Destination path for renamed spectra.
 #' @param dry_run
 #' Don't copy spectra, just return an updated platemap, with possible duplicates
-#' included, gathered and with input and output filenames
+#' included, in long format and with input and output filenames
 #'
 #' @return
-#' A data frame with the modified platemap. Each replicate is now 1 row. Duplicated
-#' samples have the "__#" suffix. Duplicated samples are flagged: \code{dupl} will flag
-#' all duplicates but the last one analyzed by \code{date} in the platemap. \code{dupl_all}
-#' will flag all duplicated samples.
+#' A data.frame with the modified platemap in long format, so each replicate is
+#' now in 1 row. Duplicated samples, if kept, have the "__#" suffix.
+#' Duplicated samples are flagged with \code{dupl}. All duplicates but the last
+#' one, by \code{date}, in the platemap are flagged.
+#' Column \code{dupl_all} will flag all duplicated samples.
 #' Path for each sample to the original plate location is included in a column.
 #' @importFrom dplyr arrange filter mutate group_by
 #' @importFrom tidyr gather
@@ -131,15 +137,16 @@ collect_triplicates = function(platemap, format=c('wide', 'long'), basepath="", 
 }
 
 
-#' Extract spectra name from dataOrigin slot of Spectra object
+#' Extract spectra name from a full path with extensions
 #'
-#' @param files Path to a individual spectrum file including the file name and extension
+#' Spectra name has the format "samplename_replicate"
 #'
-#' @return
+#' @param files Paths to the individual spectra files including the file name and extension
+#'
+#' @return A vector with sample names
 #' @export
-#' @importfrom fs path_files
+#' @importFrom fs path_file
 #'
-#' @examples
 get_spectra_name = function(files){
   files = strsplit(fs::path_file(files), '\\.')
   spectra_name = sapply(files, '[[', 1)
@@ -149,15 +156,17 @@ get_spectra_name = function(files){
 
 
 
-#' Separate file names into sample and replicate
+#' Separate spectra names into sample name and replicate.
+#'
+#' Spectra names have the format sample_replicate.
 #'
 #' @param spectra_names Spectra names
 #' @param sep Separator of sample name and replicate. Default is '_'
 #'
-#' @return
+#' @return \code{separate_sample_replicate} returns a new data.frame with columns
+#' sample and replicate
 #' @export
 #'
-#' @examples
 separate_sample_replicate = function(spectra_names, sep='_'){
   parts = strsplit(spectra_names, '_')
   samples = sapply(parts, function(x) paste0(x[-length(x)], collapse='_'))
@@ -169,17 +178,16 @@ separate_sample_replicate = function(spectra_names, sep='_'){
 }
 
 
-#' Separate spectra_name column into sample and replicate
-#'
+#' @rdname separate_sample_replicate
 #' @param sp data.frame with data, in which the spectra name is in 'spectra_name'
 #'           column
-#' @param sample_sep
-#' @param repl_seq
+#' @param sample_sep Separator found within a sample name
+#' @param repl_seq Separator between sample name and replicate number
 #'
-#' @return
+#' @return \code{separate_sample_replicate_df} returns the data.frame in \code{sp}
+#' with sample and replicate columns
 #' @export
 #'
-#' @examples
 separate_sample_replicate_df = function(sp, sample_sep='_', repl_sep='_'){
   sample_sep = paste0(sample_sep, collapse='')
   separated = separate_wider_regex(
@@ -192,9 +200,9 @@ separate_sample_replicate_df = function(sp, sample_sep='_', repl_sep='_'){
 }
 
 
-#' Clean metadata
+#' Clean spectra metadata
 #'
-#' Clean metadata so it matches the actual data files.
+#' Remove spectra in metadata that don't exist in data
 #'
 #' @param metadata A data.frame with a replicate spectra per row. It must contain
 #' at least columns sample_name and replicate
@@ -205,7 +213,6 @@ separate_sample_replicate_df = function(sp, sample_sep='_', repl_sep='_'){
 #' @export
 #' @importFrom dplyr group_by mutate ungroup
 #'
-#' @examples
 clean_metadata = function(metadata, folder) {
 
   spectra_files = dir(folder)

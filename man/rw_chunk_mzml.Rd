@@ -2,15 +2,10 @@
 % Please edit documentation in R/format_spectra.R
 \name{rw_chunk_mzml}
 \alias{rw_chunk_mzml}
-\title{Title}
+\title{Reads data in writes in mzML format}
 \usage{
-rw_chunk_mzml(x, ch, indir, read_f, outpath, in_fmt, pb)
-}
-\arguments{
-\item{x}{sample names}
-
-\item{in_fmt}{}
+rw_chunk_mzml(x, ch, indir, read_f, outpath, in_ext, pb)
 }
 \description{
-Title
+Internal use only. Use [change_format_chunks] instead
 }

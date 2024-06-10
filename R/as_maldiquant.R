@@ -3,11 +3,10 @@
 #'
 #' @param pl List of peak matrices
 #'
-#' @return
+#' @return List of [MALDIquant::MassPeaks] objects
 #' @export
 #' @importFrom MALDIquant createMassPeaks
 #'
-#' @examples
 asMassPeaksList = function(pl) {
   maldiquant_pl = lapply(
     pl, function(x){

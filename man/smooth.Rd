@@ -2,7 +2,7 @@
 % Please edit documentation in R/preprocess.R
 \name{smooth}
 \alias{smooth}
-\title{Title}
+\title{Intensity smoothing}
 \usage{
 smooth(
   x,
@@ -15,8 +15,25 @@ smooth(
 )
 }
 \arguments{
-\item{k}{}
+\item{x}{Peak matrix}
+
+\item{method}{Smoothing method. One of \code{'MovingAverage'}, \code{'WeightedMovingAverage'}
+or \code{'SavitzkyGolay'}}
+
+\item{hws}{Half window size}
+
+\item{k}{For Savitzky-Golay filter, this is the polynomial order for the coefficients}
+
+\item{int_index}{Column with the intensity to smooth}
+
+\item{in_place}{Whether smoothing is in place, or a new column with the smoothened
+intensity is added}
+
+\item{...}{Parameters passed to other methods. Not in use, required by [Spectra::addProcessing].}
+}
+\value{
+Peak matrix
 }
 \description{
-Title
+Intensity smoothing
 }

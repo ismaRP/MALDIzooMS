@@ -9,6 +9,9 @@ asMassPeaksList(pl)
 \arguments{
 \item{pl}{List of peak matrices}
 }
+\value{
+List of [MALDIquant::MassPeaks] objects
+}
 \description{
 Transform list of peak matrices into a list of [MALDIquant::MassPeaks]
 }

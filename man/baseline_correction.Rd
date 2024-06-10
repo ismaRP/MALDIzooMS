@@ -2,7 +2,7 @@
 % Please edit documentation in R/preprocess.R
 \name{baseline_correction}
 \alias{baseline_correction}
-\title{Baseline subtraction}
+\title{Baseline correction subtraction}
 \usage{
 baseline_correction(
   x,
@@ -18,14 +18,21 @@ baseline_correction(
 
 \item{int_index}{Index of the intensity to calculate the baseline}
 
+\item{keep_bl}{Keep basseline in a separate column}
+
 \item{substract_index}{Index of the intensity column to be substracted.
 If NULL, there is no substraction}
 
-\item{in_place}{Replace the intensity in `substract_index` with the baseline
+\item{in_place}{Replace the intensity in \code{substract_index} with the baseline
 substracted intensity}
 
-\item{...}{Arguments passed to [bl_estim()]}
+\item{...}{Arguments passed to [MsCoreUtils::estimateBaseline()]. Currently \code{'method'}.}
+}
+\value{
+Peak matrix. Depending on the arguments, with the baseline-substracted
+intensities either in the same or in a new column and with or without the
+baseline itself.
 }
 \description{
-Baseline subtraction
+Baseline correction subtraction
 }

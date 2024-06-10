@@ -2,12 +2,12 @@
 % Please edit documentation in R/format_spectra.R
 \name{change_format_chunks}
 \alias{change_format_chunks}
-\title{Read MALDI data in a given format in chunks and export in a different one}
+\title{Change MALDI-TOF data format}
 \usage{
 change_format_chunks(
   spectra_names,
   indir,
-  in_fmt,
+  in_ext,
   readf,
   outpath,
   writef,
@@ -18,12 +18,30 @@ change_format_chunks(
 )
 }
 \arguments{
-\item{in_fmt}{}
+\item{spectra_names}{File names to transform (without extension)}
 
-\item{readf}{One of 'fread', 'table' or 'mzML'}
+\item{indir}{Path to data folder}
 
-\item{writef}{One of 'tab' or 'mzML'}
+\item{in_ext}{Extension of input files}
+
+\item{readf}{Input format reading function. One of \code{'fread'}, \code{'table'}
+or \code{'mzML'}. \code{'fread'} uses [data.table::fread()],
+\code{'table'} uses [utils::read.table()] and \code{mzML} uses [mzR::openMSfile()].}
+
+\item{outpath}{Destination path}
+
+\item{writef}{Output format writing function. one of 'tab' or 'mzML'.
+Determines the destination format of the files.}
+
+\item{sep}{Separator for tsv input files. Default is \code{"\t"}}
+
+\item{mc.cores}{Number of cores to use}
+
+\item{nchunks}{Number of chunks to split the files into}
+
+\item{verbose}{}
 }
 \description{
-Read MALDI data in a given format in chunks and export in a different one
+Read MALDI data in tsv (tab) or mzML format in chunks and export in tsv (tab) or mzML.
+It is a wrapper interface around reading and writting functions.
 }

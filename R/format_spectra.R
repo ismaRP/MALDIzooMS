@@ -1,83 +1,94 @@
 
 
+#' Returns mzML header data for [mzR]
+#'
+#' @return A one row data.frame
+#'
 initialize_mzml_header = function() {
   header_df = data.frame(
-    seqNum=1,
-    acquisitionNum=0,
-    msLevel=1,
-    polarity=-1,
-    peaksCount=0,
-    totIonCurrent=0,
-    retentionTime=NaN,
-    basePeakMZ=0,
-    basePeakIntensity=0,
-    collisionEnergy=NaN,
-    ionisationEnergy=NaN,
-    lowMZ=0,
-    highMZ=0,
-    precursorScanNum=NaN,
-    precursorMZ=NaN,
-    precursorCharge=NaN,
-    precursorIntensity=NaN,
-    mergedScan=NaN,
-    mergedResultScanNum=NaN,
-    mergedResultStartScanNum=NaN,
-    mergedResultEndScanNum=NaN,
-    injectionTime=NaN,
-    filterString='',
-    spectrumId='',
-    centroided=FALSE,
-    ionMobilityDriftTime=NaN,
-    isolationWindowTargetMZ=NaN,
-    isolationWindowLowerOffset=NaN,
-    isolationWindowUpperOffset=NaN,
-    scanWindowLowerLimit=NaN,
-    scanWindowUpperLimit=NaN
+    seqNum = 1,
+    acquisitionNum = 0,
+    msLevel = 1,
+    polarity = -1,
+    peaksCount = 0,
+    totIonCurrent = 0,
+    retentionTime = NaN,
+    basePeakMZ = 0,
+    basePeakIntensity = 0,
+    collisionEnergy = NaN,
+    ionisationEnergy = NaN,
+    lowMZ = 0,
+    highMZ = 0,
+    precursorScanNum = NaN,
+    precursorMZ = NaN,
+    precursorCharge = NaN,
+    precursorIntensity = NaN,
+    mergedScan = NaN,
+    mergedResultScanNum = NaN,
+    mergedResultStartScanNum = NaN,
+    mergedResultEndScanNum = NaN,
+    injectionTime = NaN,
+    filterString = '',
+    spectrumId = '',
+    centroided = FALSE,
+    ionMobilityDriftTime = NaN,
+    isolationWindowTargetMZ = NaN,
+    isolationWindowLowerOffset = NaN,
+    isolationWindowUpperOffset = NaN,
+    scanWindowLowerLimit = NaN,
+    scanWindowUpperLimit = NaN
   )
   return(header_df)
 }
 
 
-#' Read MALDI data in a given format in chunks and export in a different one
+#' Change MALDI-TOF data format
 #'
-#' @param indir
-#' @param readf One of 'fread', 'table' or 'mzML'
-#' @param nchunks
-#' @param writef One of 'tab' or 'mzML'
-#' @param spectra_names
-#' @param mc.cores
-#' @param outpath
-#' @param in_fmt
+#' Read MALDI data in tsv (tab) or mzML format in chunks and export in tsv (tab) or mzML.
+#' It is a wrapper interface around reading and writting functions.
 #'
-#' @return
+#' @param indir Path to data folder
+#' @param readf Input format reading function. One of \code{'fread'}, \code{'table'}
+#'              or \code{'mzML'}. \code{'fread'} uses [data.table::fread()],
+#'              \code{'table'} uses [utils::read.table()] and \code{mzML} uses [mzR::openMSfile()].
+#' @param nchunks Number of chunks to split the files into
+#' @param writef Output format writing function. one of 'tab' or 'mzML'.
+#'               Determines the destination format of the files.
+#' @param spectra_names File names to transform (without extension)
+#' @param mc.cores Number of cores to use
+#' @param outpath Destination path
+#' @param in_ext Extension of input files
+#' @param sep Separator for tsv input files. Default is \code{"\t"}
+#' @param verbose Print progress bar
+#'
+#' @return NULL
 #' @export
 #'
-#' @examples
-change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath,
+change_format_chunks = function(spectra_names, indir, in_ext, readf, outpath,
                                 writef, sep='\t', mc.cores=4, nchunks = 80,
                                 verbose=NULL){
-  switch(EXPR=readf,
+  switch(EXPR = readf,
          "fread" = {
            read_f = function(sep){
              function(x){
-               importTsv(f=x, sep=sep)
+               import_tsv(f = x, sep = sep)
              }
            }
-           read_f = read_f(sep=sep)
+           read_f = read_f(sep = sep)
          },
          "table" = {
            read_f = function(sep){
              function(x){
-               importTable(f=x, sep=sep)
+               import_table(f = x, sep = sep)
              }
            }
-           read_f = read_f(sep=sep)
+           read_f = read_f(sep = sep)
          },
          "mzML" = {
            read_f = function(f) peaks(openMSfile(f))
          }
   )
-  switch(EXPR=writef,
+  switch(EXPR = writef,
          "tab" = {
            rw_f = rw_chunk_tsv
          },
@@ -88,14 +99,14 @@ change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath,
   )
 
   isFile = !isTRUE(file.info(outpath)$isdir)
-  if (isFile & (nchunks > 1 || writef!='mzML')){
+  if (isFile & (nchunks > 1 || writef != 'mzML')) {
     stop("1 file write mode is only supported for mzML format and 1 chunk")
   }
 
   # spectra_f = list.files(indir)
   # Filter out empty files
   # filter_empty = lapply(
-  #   paste0(spectra_names, '.', in_fmt),
+  #   paste0(spectra_names, '.', in_ext),
   #   check_empty,
   #   indir
   # )
@@ -119,32 +130,25 @@ change_format_chunks = function(spectra_names, indir, in_fmt, readf, outpath,
     rw_f,
     spectra_chunks,
     seq_along(spectra_chunks),
-    MoreArgs=list(indir=indir, read_f=read_f, outpath=outpath, in_fmt=in_fmt, pb=pb),
-    mc.cores=mc.cores
+    MoreArgs = list(indir = indir, read_f = read_f, outpath = outpath,
+                    in_ext = in_ext, pb = pb),
+    mc.cores = mc.cores
   ))
 
 }
 
 
-#' Title
 #'
-#' @param x sample names
-#' @param indir
-#' @param read_f
-#' @param fmt
-#' @param outpath
-#' @param in_fmt
+#' Reads data in writes in mzML format
 #'
-#' @return
+#' Internal use only. Use [change_format_chunks] instead
 #' @importFrom mzR writeMSData
 #' @importFrom dplyr bind_rows
 #' @importFrom fs is_file
-#' @export
 #'
-#' @examples
-rw_chunk_mzml = function(x, ch, indir, read_f, outpath, in_fmt, pb) {
+rw_chunk_mzml = function(x, ch, indir, read_f, outpath, in_ext, pb) {
   # Create infiles
-  infiles = paste0(x, '.', in_fmt)
+  infiles = paste0(x, '.', in_ext)
   infiles = file.path(indir, infiles)
   l = lapply(infiles, read_f)
 
@@ -155,17 +159,17 @@ rw_chunk_mzml = function(x, ch, indir, read_f, outpath, in_fmt, pb) {
   isFile = fs::is_file(outpath)
   if (!isFile) { # save multiple  files in outpath
     invisible(mapply(
-      export_mzR, l, x,
-      MoreArgs = list(outpath=outpath, header_template=header_template)))
+      export_mzml, l, x,
+      MoreArgs = list(outpath = outpath, header_template = header_template)))
   } else {
     headers_df = bind_rows(mapply(
-      generate_header, l, x, MoreArgs=list(header_template = header_template)
+      generate_header, l, x, MoreArgs = list(header_template = header_template)
     ))
-    writeMSData(l, file=outpath, header=headers_df,
-                backend='pwiz', ouformat='mzml')
+    writeMSData(l, file = outpath, header = headers_df,
+                backend = 'pwiz', ouformat = 'mzml')
   }
 
-  if (!is.null(pb)){
+  if (!is.null(pb)) {
     setTxtProgressBar(pb, ch)
   }
 }
@@ -181,21 +185,14 @@ generate_header = function(x, id, header_template){
 }
 
 
-#' Title
+
+
+#' Reads data in writes in mzML format
 #'
-#' @param x
-#' @param indir
-#' @param read_f
-#' @param outdir
-#' @param fmt
-#'
-#' @return
-#' @export
-#'
-#' @examples
-rw_chunk_tsv = function(x, ch, indir, read_f, outpath, in_fmt, pb) {
-  infiles = paste0(x, '.', in_fmt)
-  infiles = file.path(infiles, in_fmt)
+#' Internal use only. Use [change_format_chunks] instead
+rw_chunk_tsv = function(x, ch, indir, read_f, outpath, in_ext, pb) {
+  infiles = paste0(x, '.', in_ext)
+  infiles = file.path(infiles, in_ext)
   l = lapply(infiles, read_f)
   l = mapply(
     function(s, n){
@@ -207,119 +204,103 @@ rw_chunk_tsv = function(x, ch, indir, read_f, outpath, in_fmt, pb) {
   #                replacement="", x=x)
   outfiles = paste0(x, '.tab')
   outfiles = file.path(outpath, outfiles)
-  exportTsv(l, path=outfiles)
-  if (!is.null(pb)){
+  export_tsv(l, path = outfiles)
+  if (!is.null(pb)) {
     setTxtProgressBar(pb, ch)
   }
 }
 
 ##### IMPORT FUNCTIONS READ FILE BY FILE
 
-#' Title
+#' Import data in tsv format
 #'
-#' @param f
+#' Uses [data.table::fread]
 #'
-#' @return
+#' @param f Path to file
+#' @param sep Separator. Default is \code{"\t"}
+#'
+#' @return Matrix with mz and intensities
 #' @importFrom MALDIquant createMassSpectrum
 #' @importFrom data.table fread
 #' @importFrom tibble tibble
 #' @export
 #'
-importTsv = function(f, sep="\t") {
+import_tsv = function(f, sep="\t") {
   s = as.matrix(
-    fread(f, colClasses=c("numeric", "numeric"), sep=sep,
-          col.names=c('mz', 'intensity')))
+    fread(f, colClasses = c("numeric", "numeric"), sep = sep,
+          col.names = c('mz', 'intensity')))
   return(s)
 }
 
 
-#' Title
+#' Import data in tsv format
 #'
-#' @param f
+#' Uses [utils::read.table]
 #'
-#' @return
+#' @param f Path to file
+#' @param sep Separator. Default is \code{''}, which for [utils::read.table()] can
+#'            be one or more white spaces or tabs. If you're certain the separator
+#'            is exactly \code{"\t"}, [import_tsv()] is a faster option.
+#'
+#' @return A data.frame with mz and intensity values
 #' @importFrom MALDIquant createMassSpectrum
 #' @importFrom utils read.table
 #' @export
 #'
-importTable = function(f, sep=''){
+import_table = function(f, sep = ''){
   s = read.table(f, col.names = c('mz', 'intensity'))
   return(s)
 }
 
-#' Title
-#'
-#' @param f
-#'
-#' @return
-#' @importFrom MALDIquantForeign importMzMl
-#' @export
-#'
-#' @examples
-import_file.MzMl = function(f) {
-  s = importMzMl(f, verbose=F)
-  return(s[[1]])
-}
-
-
 ##### EXPORT FUNCTIONS WRITE LISTS OF FILES
-#' Title
+#' Export list of spectra in multiple \code{"tsv"} files
 #'
-#' @param l
-#' @param path
+#' @param l List of spectra
+#' @param path List of paths to write each spectra in \code{l}.
 #'
-#' @return
 #' @importFrom data.table fwrite
 #' @export
 #'
-#' @examples
-exportTsv = function(l, path) {
+export_tsv = function(l, path) {
   invisible(mapply(
-    function(x, f) fwrite(x, f, sep="\t"),
+    function(x, f) fwrite(x, f, sep = "\t"),
     l, path
   ))
 }
 
-#' Export a matrix into mzML using mzR
+#' Export a matrix into mzML using [mzR::writeMSdata]
 #'
 #' @param x Matrix with mz and intensities
 #' @param id Spectra ID
-#' @param template_header
+#' @param outpath Path to output folder
+#' @param header_template Header template to complete with spectra data and id
 #'
-#' @return
 #' @export
 #' @importFrom mzR writeMSData
 #'
-#' @examples
-export_mzR = function(x, id, outpath, header_template) {
+export_mzml = function(x, id, outpath, header_template) {
   header = generate_header(x, id, header_template)
   outfile = paste0(id, '.mzML')
   outfile = file.path(outpath, outfile)
-  writeMSData(list(x), header=header, file=outfile,
-              backend='pwiz', outformat='mzml')
+  writeMSData(list(x), header = header, file = outfile,
+              backend = 'pwiz', outformat = 'mzml')
 }
 
 
 chunks = function(x,n) split(x, cut(seq_along(x), n, labels = FALSE))
 
 
-#' Title
+#' Check is spectra file is empty
 #'
-#' @param x
-#' @param indir
+#' @param x File name
+#' @param indir Directory to data
 #'
-#' @return
+#' @return \code{TRUE} if file has any data, \code{FALSE} if it's empty
 #' @export
 #'
-#' @examples
 check_empty = function(x, indir){
   f = file.path(indir, x)
-  t = readLines(f,1)
-  if (length(t)>0) {
-    return(TRUE)
-  } else {
-    return(FALSE)
-  }
+  return(file.size(f) == 0L)
 }
 
 

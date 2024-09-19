@@ -87,17 +87,17 @@ collect_triplicates = function(platemap, format=c('wide', 'long'), basepath="", 
                                 paste0(subfolder, '.', ext),
                                 paste0(basename, '_', spot, '.', ext))) %>%
       mutate(exists = file.exists(inpath))
-    if (any(duplicated(platemap$sample_name), na.rm = T)) {
+    if (any(duplicated(paste0(platemap$sample_name, '_', platemap$replicate)), na.rm = T)) {
       if (keep_dupl == F) {
         warning("Duplicated samples, only the last one will be considered")
       } else {
         warning("Duplicated samples, adding suffix to duplicates to make unique sample names")
         duplidx = with(platemap,
-                       ave(seq_along(sample_name), sample_name, FUN=seq_along))
+                       ave(seq_along(sample_name), paste0(sample_name, '_', replicate), FUN=seq_along))
         dupl_all = with(platemap,
-                        duplicated(sample_name) | duplicated(sample_name, fromLast = T))
+                        duplicated(paste0(sample_name, '_', replicate)) | duplicated(paste0(sample_name, '_', replicate), fromLast = T))
         dupl = with(platemap,
-                    duplicated(sample_name, fromLast = T))
+                    duplicated(paste0(sample_name, '_', replicate), fromLast = T))
         platemap = platemap %>%
           mutate(dupl_all = dupl_all, dupl = dupl) %>%
           mutate(

@@ -39,7 +39,7 @@ Determines the destination format of the files.}
 
 \item{nchunks}{Number of chunks to split the files into}
 
-\item{verbose}{}
+\item{verbose}{Print progress bar}
 }
 \description{
 Read MALDI data in tsv (tab) or mzML format in chunks and export in tsv (tab) or mzML.

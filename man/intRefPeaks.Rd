@@ -2,10 +2,10 @@
 % Please edit documentation in R/align_peaks.R
 \name{intRefPeaks}
 \alias{intRefPeaks}
-\title{Title}
+\title{Build internal reference spectrum}
 \usage{
 intRefPeaks(
-  l,
+  mpl,
   method = c("strict", "relaxed"),
   minFreq = 0.9,
   tolerance = 0.002,
@@ -13,8 +13,10 @@ intRefPeaks(
 )
 }
 \arguments{
+\item{mpl}{MassPeaksList object}
+
 \item{labels}{}
 }
 \description{
-Title
+Build internal reference spectrum
 }

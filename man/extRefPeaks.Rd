@@ -2,13 +2,18 @@
 % Please edit documentation in R/align_peaks.R
 \name{extRefPeaks}
 \alias{extRefPeaks}
-\title{Title}
+\title{Build reference Spectrum from external sequences}
 \usage{
-extRefPeaks(sequences, mc.cores = 4L, gpo_only = F, masspeaks = T)
+extRefPeaks(
+  sequences,
+  mc.cores = 4L,
+  gpo_only = F,
+  ret.object = c("df", "MassPeaks", "Spectra")
+)
 }
 \arguments{
-\item{gpo_only}{}
+\item{ret.object}{}
 }
 \description{
-Title
+Build reference Spectrum from external sequences
 }

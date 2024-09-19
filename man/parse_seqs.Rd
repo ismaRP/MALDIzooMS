@@ -2,7 +2,7 @@
 % Please edit documentation in R/align_peaks.R
 \name{parse_seqs}
 \alias{parse_seqs}
-\title{Title}
+\title{Parse sequence}
 \usage{
 parse_seqs(species, chain, id, sequence, gpo_only = F)
 }
@@ -10,5 +10,5 @@ parse_seqs(species, chain, id, sequence, gpo_only = F)
 \item{sequence}{}
 }
 \description{
-Title
+Parse sequence
 }

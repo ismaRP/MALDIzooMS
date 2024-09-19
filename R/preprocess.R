@@ -95,6 +95,53 @@ int_col2 = function(x, int_index=4, ...) {
 
 
 
+#' Applies processing queue to Spectra
+#'
+#' @param s Spectra object
+#' @param write_data logical. Whether to write spectra data into a file
+#'        This will apply processing, export spectra into mzML file(s) and
+#'        reload into a new Spectra object with MsBackendMzR. This is useful
+#'        if we want to apply preprocessing and the resulting object is still
+#'        too big to keep in memory, either because there are too many spectra
+#'        or because we still haven't picked peaks.
+#' @param file If `write_data` is `TRUE`, file or files to write spectra.
+#'        IF there is one file, all spectra is saved on the same file.
+#'        If multiple files, there needs to be one per spectra.
+#'
+#' @return A Spectra object with either [Spectra::MsBackendMzR] or
+#' [Spectra::MsBackendDataFrame] backends
+#' @importFrom Spectra export Spectra MsBackendMzR MsBackendDataFrame
+#' @export
+#'
+#' @examples
+apply_preprocess = function(s, write_data=FALSE, file=NULL) {
+
+  if (write_data) {
+    # Exporting applies all processing steps
+    export(object=sps_mzr, backend=MsBackendMzR(), format='mzML',
+           file=file)
+    # Reload the mzML into a new Spectra object
+    s = suppressMessages(
+      Spectra(file, source = MsBackendMzR(), centroided = FALSE,
+              BPPARAM = MulticoreParam(workers = ncores)))
+  } else {
+    peaks = peaksData(s)
+    spd = spectraData(s)
+
+    spd$mz = lapply(peaks, '[', , 1)
+    spd$intensity = lapply(peaks, '[', , 2)
+    if ('SNR' %in% colnames(peaks[[1]])) {
+      spd$SNR = lapply(peaks, "[", ,3)
+    }
+    s = Spectra(
+      spd, backend = MsBackendDataFrame(), centroided=TRUE,
+      peaksVariables = peaks_vars)
+  }
+  return(s)
+
+}
+
+
 #' Peak detection
 #'
 #' It implements [Spectra::pickPeaks()], but allows using intensities in a given
@@ -114,6 +161,7 @@ int_col2 = function(x, int_index=4, ...) {
 #'                  Only values above this fraction of the maxima are used.
 #' @param int_index Index of the intensity in the peak matrix to be used for peak
 #'                  detection.
+#' @param add_snr logical, whether to add a column with each peak's SNR
 #' @param ... Currently not in use, required by [Spectra::addProcessing].
 #'
 #' @return Peak matrix, only containing peaks that fullfill all criteria.
@@ -122,7 +170,7 @@ int_col2 = function(x, int_index=4, ...) {
 #'
 peak_detection = function(x, halfWindowSize = 2L, method = c("MAD", "SuperSmoother"),
                          snr = 0L, k = 0L, descending = FALSE, threshold = 0,
-                         int_index=2, ...){
+                         int_index=2, add_snr=FALSE, ...){
   n = noise(x[, 1L], x[, int_index], method = method)
   l = localMaxima(x[, int_index], hws = halfWindowSize)
   p = which(l & x[, int_index] > (snr * n))
@@ -140,8 +188,11 @@ peak_detection = function(x, halfWindowSize = 2L, method = c("MAD", "SuperSmooth
   } else {
     x = x[p, , drop = FALSE]
   }
-  x = cbind(x, x[, int_index]/n)
-  colnames(x)[ncol(x)] = 'SNR'
+  # Add SNR
+  if (add_snr){
+    x = cbind(x, x[, int_index]/n)
+    colnames(x)[ncol(x)] = 'SNR'
+  }
   return(x)
 }
 
@@ -286,7 +337,7 @@ peptide_pseudo_clusters = function(x, mono_masses, n_isopeaks, min_isopeaks, ...
   # Run closest function to match x and isotopic masses
   # idx = closest(x[,1], masses, tolerance = x[,1]*tol)
   # idx = closest(x[,1], masses, ppm=250, tolerance=0)
-  idx = closest(x[,1], masses, ...)
+  idx = MsCoreUtils::closest(x[,1], masses, ...)
 
   # Vector to control for isotopic pattern completness
   sel_complete = rep(F, length(masses))

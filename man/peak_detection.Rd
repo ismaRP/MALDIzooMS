@@ -13,6 +13,7 @@ peak_detection(
   descending = FALSE,
   threshold = 0,
   int_index = 2,
+  add_snr = FALSE,
   ...
 )
 }
@@ -38,6 +39,8 @@ Only values above this fraction of the maxima are used.}
 
 \item{int_index}{Index of the intensity in the peak matrix to be used for peak
 detection.}
+
+\item{add_snr}{logical, whether to add a column with each peak's SNR}
 
 \item{...}{Currently not in use, required by [Spectra::addProcessing].}
 }

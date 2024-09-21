@@ -124,7 +124,6 @@ sps_mzr = apply_preprocess(
 
 sps_df_deiso = deisotopeSpectra(sps_mzr, tolerance=tolerance, ppm=ppm)
 
-tictoc::tic('Aligning')
 sps_df_aligned = align_peaks(
   sps_df_deiso, tolerance = 0.005, minFreq = 0.9, labels=denisova_metadata$zooMS_ID)
 

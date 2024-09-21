@@ -301,6 +301,7 @@ filter_peaks = function(s, minFrequency, minNumber, labels, mergeWhitelists=FALS
 #' and mz values as columns.
 #'
 #' @param s Spectra object
+#' @param specvar_to_names
 #'
 #' @return
 #' @export

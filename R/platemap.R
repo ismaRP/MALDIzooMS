@@ -22,7 +22,7 @@
 #'   \item date (optionl): the date each plate was spotted or analyzed.
 #' }
 #'
-#' @param format
+#' @param in_pivot
 #' Whether the platemap is in "wide" or "long" format.
 #' In the wide format, each row is one sample and the coordinates of the
 #' replicates are in different columns as spot1, spot2, ...
@@ -30,6 +30,8 @@
 #' platemap must contain a column called "replicate" with the replicate number
 #' and the column with the coordinates should be called "spot".
 #' Long format assumes no duplicates.
+#' @param out_pivot
+#' Whether to return the platemap in "wide" or "long" format.
 #' @param basepath
 #' Path to plates
 #' @param ext
@@ -43,9 +45,11 @@
 #' @param outfolder
 #' Destination path for renamed spectra.
 #' @param dry_run
-#' Don't copy spectra, just return an updated platemap, with possible duplicates
+#' Logical. Don't copy spectra, just return an updated platemap, with possible duplicates
 #' included, in long format and with input and output filenames
-#'
+#' @param ext_in_folder
+#' Logical. Whether the platemap folder name has the extension in it, e.g.
+#' 20180727_SS08.txt where SS08 is the plate name.
 #' @return
 #' A data.frame with the modified platemap in long format, so each replicate is
 #' now in 1 row. Duplicated samples, if kept, have the "__#" suffix.
@@ -67,59 +71,70 @@
 #'   outfolder = 'path/to/samples',
 #'   keep_dupl = T, keep_incomplete_tripl = T, dry_run=F)
 #' }
-collect_triplicates = function(platemap, format=c('wide', 'long'), basepath="", ext=NULL, outfolder=NULL,
-                               keep_dupl=T, keep_incomplete_tripl=T, dry_run=F) {
+collect_triplicates = function(platemap, in_pivot=c('wide', 'long'), basepath="", ext=NULL,
+                               outfolder=NULL, out_pivot=c('long', 'wide'),
+                               keep_dupl=T, keep_incomplete_tripl=T,
+                               ext_in_folder=FALSE, dry_run=F) {
 
-  format = match.arg(format)
+  in_pivot = match.arg(in_pivot)
+  out_pivot = match.arg(out_pivot)
 
   if (any(is.null(basepath), is.null(ext), is.null(outfolder)) &
       !dry_run) {
     stop("Specifiy path for platemaps, extension and output folder")
   }
 
-  if (format == 'wide'){
+  if (in_pivot == 'wide'){
     # Gather platemap
     platemap = platemap %>%
       gather("replicate", "spot", c(spot1, spot2, spot3)) %>%
       arrange(folder, subfolder, sample_name) %>%
       mutate(replicate = as.numeric(substr(replicate, 5, 5))) %>%
-      mutate(inpath = file.path(basepath, folder,
-                                paste0(subfolder, '.', ext),
-                                paste0(basename, '_', spot, '.', ext))) %>%
-      mutate(exists = file.exists(inpath))
-    if (any(duplicated(paste0(platemap$sample_name, '_', platemap$replicate)), na.rm = T)) {
-      if (keep_dupl == F) {
-        warning("Duplicated samples, only the last one will be considered")
-      } else {
-        warning("Duplicated samples, adding suffix to duplicates to make unique sample names")
-        duplidx = with(platemap,
-                       ave(seq_along(sample_name), paste0(sample_name, '_', replicate), FUN=seq_along))
-        dupl_all = with(platemap,
-                        duplicated(paste0(sample_name, '_', replicate)) | duplicated(paste0(sample_name, '_', replicate), fromLast = T))
-        dupl = with(platemap,
-                    duplicated(paste0(sample_name, '_', replicate), fromLast = T))
-        platemap = platemap %>%
-          mutate(dupl_all = dupl_all, dupl = dupl) %>%
-          mutate(
-            sample_name = ifelse(dupl_all,
-                                 paste0(sample_name, "__", duplidx),
-                                 sample_name)
-          )
-      }
-    }
-  } else { # format == 'long'
+      mutate(inpath = case_when(
+        ext_in_folder == TRUE ~ file.path(
+          basepath, folder, paste0(subfolder, '.', ext), paste0(basename, '_', spot, '.', ext)),
+        ext_in_folder == FALSE ~ file.path(
+          basepath, folder, subfolder, paste0(basename, '_', spot, '.', ext))
+      )) %>%
+      mutate(exists = file.exists(inpath),
+             spectra_name = paste0(sample_name, '_', replicate))
+  } else { # in_pivot == 'long'
     platemap = platemap %>%
-      mutate(inpath = file.path(basepath, folder,
-                                paste0(subfolder, '.', ext),
-                                paste0(basename, '_', spot, '.', ext))) %>%
-      mutate(exists = file.exists(inpath))
+      mutate(inpath = case_when(
+        ext_in_folder == TRUE ~ file.path(
+          basepath, folder, paste0(subfolder, '.', ext), paste0(basename, '_', spot, '.', ext)),
+        ext_in_folder == FALSE ~ file.path(
+          basepath, folder, subfolder, paste0(basename, '_', spot, '.', ext))
+        )) %>%
+      mutate(exists = file.exists(inpath),
+             spectra_name = paste0(sample_name, '_', replicate))
   }
 
+  if (any(duplicated(platemap$spectra_name), na.rm = T)) {
+    if (keep_dupl == F) {
+      warning("Duplicated samples, only the last one will be considered")
+    } else {
+      warning("Duplicated samples, adding suffix to duplicates to make unique sample names")
+      duplidx = with(platemap,
+                     ave(seq_along(sample_name), spectra_name, FUN=seq_along))
+      dupl_all = with(platemap,
+                      duplicated(spectra_name) | duplicated(spectra_name, fromLast = T))
+      dupl = with(platemap,
+                  duplicated(spectra_name, fromLast = T))
+      platemap = platemap %>%
+        mutate(dupl_all = dupl_all, dupl = dupl) %>%
+        mutate(sample_name = ifelse(
+          dupl_all,
+          paste0(sample_name, "__", duplidx),
+          sample_name)) %>%
+        mutate(spectra_name = paste0(sample_name, '_', replicate))
+    }
+  }
+  platemap = platemap %>% group_by(sample_name) %>%
+    mutate(complete = all(exists)) %>% ungroup()
   if (!dry_run){
     if (!keep_incomplete_tripl) {
-      platemap_files = platemap %>% group_by(sample_name) %>%
-        mutate(complete = all(exists)) %>% ungroup() %>%
-        filter(complete)
+      platemap_files = platemap %>% filter(complete)
     } else {
       platemap_files = platemap %>% filter(exists)
     }
@@ -130,6 +145,19 @@ collect_triplicates = function(platemap, format=c('wide', 'long'), basepath="", 
 
     invisible(file.copy(platemap_files$inpath,
                         platemap_files$outpath))
+  }
+
+  # If we want the output in wide pivot
+  if (out_pivot == 'wide') {
+    platemap = platemap %>%
+      mutate(
+        coordinates = spot,
+        spot = paste0('spot', replicate)) %>%
+      pivot_wider(
+        id_cols = !any_of(c('replicate', 'spot', 'coordinates', 'spectra_name', 'inpath')),
+        names_from = spot, values_from = c(coordinates, exists)) %>%
+      rename_with(function(x) sapply(str_split(x, '_'), '[[', 2),
+                  .cols = starts_with('coordinates'))
   }
 
   return(platemap)
@@ -236,6 +264,59 @@ clean_metadata = function(metadata, folder) {
 
   return(metadata)
 
+}
+
+
+#' Plot spectra value in platemap
+#'
+#' @param pl platemap with two columns, spot and a numeric value to plot
+#' @param plt_var
+#' @param max_row
+#' @param max_col
+#'
+#' @return
+#' @export
+#' @importFrom tidyr separate_wider_regex
+#' @importFrom dplyr mutate
+#' @importFrom pheatmap pheatmap
+#' @importFrom viridis viridis
+#' @importFrom magrittr %>%
+#'
+#' @examples
+plot_platemap = function(pl, plt_var, max_row=NULL, max_col=NULL, plate_id='',
+                         n_viridis=100L) {
+  pl = pl %>%
+    separate_wider_regex(
+      spot, patterns = c(row_letter='[A-Z]', column='[0-9]{1,2}')) %>%
+      mutate(column = as.integer(column))
+  letters_pos = 1:26
+  names(letters_pos) = LETTERS[1:26]
+  pl$row = map_int(pl$row_letter, function(x) letters_pos[x])
+  if (is.null(max_row)) max_row = max(pl$row)
+  if (is.null(max_col)) max_row = max(pl$column)
+
+  plate_matrix = matrix(NA, nrow = max_row, ncol=max_col)
+  names_matrix = matrix('', nrow = max_row, ncol=max_col)
+
+  for (i in 1:nrow(pl)) {
+    col_idx = pl[[i,'column']]
+    row_idx = pl[[i,'row']]
+    value = pl[[i, plt_var]]
+    sp_name = pl[[i, 'spectra_name']]
+    plate_matrix[row_idx, col_idx] = value
+    names_matrix[row_idx, col_idx] = sp_name
+  }
+  rownames(plate_matrix) = LETTERS[1:max_row]
+  colnames(plate_matrix) = 1:max_col
+  rownames(names_matrix) = LETTERS[1:max_row]
+  colnames(names_matrix) = 1:max_col
+
+
+  pheatmap(plate_matrix, main=paste0(plate_id, ' - ', plt_var),
+           cluster_rows = F, cluster_cols = F,
+           color = viridis(n_viridis), angle_col=0)
+
+  return(names_matrix)
 }
 
 

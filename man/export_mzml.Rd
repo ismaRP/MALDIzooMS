@@ -4,7 +4,7 @@
 \alias{export_mzml}
 \title{Export a matrix into mzML using [mzR::writeMSdata]}
 \usage{
-export_mzml(x, id, outpath, header_template)
+export_mzml(x, id, idx, outpath, header_template)
 }
 \arguments{
 \item{x}{Matrix with mz and intensities}

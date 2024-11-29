@@ -44,6 +44,20 @@ as.matrix.MassObjectList = function(l){
   m
 }
 
+#' Get binary matrix
+#'
+#' @param s
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_bin_matrix = function(s) {
+  mpl = asMassPeaksList(peaksData(s))
+  m = as.binary.matrix(as.matrix.MassObjectList(mpl))
+  return(m)
+}
+
 
 #' Build internal reference spectrum
 #'
@@ -58,13 +72,14 @@ as.matrix.MassObjectList = function(l){
 #' @export
 #'
 #' @examples
-intRefPeaks = function(mpl, method=c('strict', 'relaxed'), minFreq=0.9,
-                       tolerance=0.002, labels=NULL){
+int_ref_peaks = function(mpl, method=c('strict', 'relaxed'), minFreq=0.9,
+                       tolerance=0.002, labels=NULL, ret.object=c('Spectra','MassPeaks', 'df')){
   method = match.arg(method)
+  ret.object = match.arg(ret.object)
 
   if (is(mpl, 'Spectra')) {
     # Apply processing queue
-    peaks = peaksData(s)
+    peaks = peaksData(mpl)
     # Transform into MALDIquant MassPeaksList
     mpl = asMassPeaksList(peaks)
   } else if(!isMassPeaksList(mpl)) {
@@ -82,14 +97,26 @@ intRefPeaks = function(mpl, method=c('strict', 'relaxed'), minFreq=0.9,
       minFrequency=minFreq, labels=labels
     )
   }
-
-
   m = as.binary.matrix(as.matrix.MassObjectList(referencePeaks))
-
   ## set peak intensity to number of occurrence
   intensity = unname(colMeans(m))
 
-  createMassPeaks(mass=attr(m, "mass"), intensity=intensity)
+  if (ret.object == 'MassPeaks') {
+    return(createMassPeaks(mass=attr(m, "mass"), intensity=intensity))
+  } else if (ret.object == 'df') {
+    return(data.frame(mass=attr(m, "mass"), intensity=intensity))
+  } else if (ret.object == 'Spectra') {
+    spd <- DataFrame(
+      msLevel = c(1L),
+      polarity = c(1L),
+      id = c("IntReference"),
+      name = c("IntReference"))
+    spd$mz = list(attr(m, "mass"))
+    spd$intensity = list(intensity)
+    return(Spectra(spd))
+  } else {
+    stop('Return object can only be a MassPeaks or a dataframe (df)')
+  }
 }
 
 
@@ -108,7 +135,7 @@ intRefPeaks = function(mpl, method=c('strict', 'relaxed'), minFreq=0.9,
 #'
 #' @examples
 parse_seqs = function(species, chain, id, sequence, gpo_only=F){
-  pseq = parse.seq(sequence, max.missed.cleaves = 1, gpo_only=gpo_only)
+  pseq = parse.seq(sequence, max.missed.cleaves = 0, gpo_only=gpo_only)
   pseq$chain = chain
   pseq$species = species
   pseq
@@ -121,6 +148,7 @@ parse_seqs = function(species, chain, id, sequence, gpo_only=F){
 #' @param mc.cores
 #' @param gpo_only
 #' @param ret.object
+#' @param non_deam
 #'
 #' @return
 #' @importFrom dplyr bind_rows select
@@ -129,7 +157,8 @@ parse_seqs = function(species, chain, id, sequence, gpo_only=F){
 #' @export
 #'
 #' @examples
-extRefPeaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 'MassPeaks', 'Spectra')) {
+ext_ref_peaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 'MassPeaks', 'Spectra'),
+                         non_deam = FALSE) {
 
   ret.object = match.arg(ret.object)
   # Digest sequences
@@ -140,10 +169,15 @@ extRefPeaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 'M
       as.list(sequences)))
 
   peptides = do.call(bind_rows, peptides) %>% as_tibble()
-
   # peptides = peptides[peptides$nglut==0,]
-  peptides = peptides[!duplicated(select(peptides, -species, -seqpos)),] %>%
+
+  peptides = peptides %>% arrange(mass1)
+  peptides = peptides[!duplicated(select(peptides, mass1)),] %>%
     select(-species)
+
+  if (non_deam) {
+    peptides = peptides %>% filter(nglut == 0)
+  }
 
   if (ret.object == 'MassPeaks') {
     return(createMassPeaks(mass=sort(peptides$mass1), intensity=rep(1, nrow(peptides))))
@@ -153,30 +187,41 @@ extRefPeaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 'M
     spd$mz = list(sort(peptides$mass1))
     sps = Spectra(spd, backend=MsBackendDataFrame())
     return(sps)
+  } else if (ret.object == 'df'){
+    return(peptides)
   }
 
 }
 
 
-
-#' Align peaks
+#' Align Peaks in Spectra
 #'
-#' Prior aligning, all processing queue is applied
-#' @param s Spectra object. Must be centroided
-#' @param minFreq
-#' @param tolerance
-#' @param labels
-#' @param th_peaks
-#' @param ...
+#' This function aligns peaks across spectra using a specified tolerance and optionally a reference peak list.
 #'
-#' @return A Spectra object with MsBackendDataFrame
-#' @importFrom MALDIquant determineWarpingFunctions warpMassPeaks binPeaks
-#' @importFrom MALDIquant mass intensity
-#' @importFrom Spectra MsBackendDataFrame
-#' @export
+#' @param s A `Spectra` object containing the spectral data to be aligned.
+#' @param tolerance A numeric value specifying the m/z tolerance for peak matching.
+#' @param minFreq A numeric value between 0 and 1 representing the minimum frequency of a peak across spectra for it to be considered a reference peak. Defaults to 0.9 if `reference` is `NULL`.
+#' @param reference An optional `MassPeaks` object to be used as the reference for alignment. If `NULL`, a reference is created based on `minFreq`.
+#' @param labels Optional labels for the reference peaks.
+#' @param return_ref Logical. If `TRUE`, the function returns a list with the aligned spectra and the reference peaks. Defaults to `FALSE`.
+#' @param ... Additional arguments to control alignment behavior. Supported arguments:
+#'   - `allowNoMatches`: Logical, if `TRUE`, allows no matches in warping functions.
+#'   - `emptyNoMatches`: Logical, if `TRUE`, inserts empty values for unmatched peaks in the output.
+#'
+#' @return If `return_ref = FALSE`, returns an aligned `Spectra` object. If `return_ref = TRUE`, returns a list containing the aligned `Spectra` object and the reference peaks.
+#'
+#' @details The function first processes the peaks in `s`, and if no reference is provided, it generates one based on `minFreq`. The function applies warping functions determined by the `determineWarpingFunctions` function and then aligns the spectra.
 #'
 #' @examples
-align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL, ...){
+#' # Example usage:
+#' # align_peaks(spectra, tolerance = 0.1)
+#' @importFrom MALDIquant determineWarpingFunctions warpMassPeaks binPeaks
+#' @importFrom MALDIquant mass intensity
+#' @importFrom Spectra MsBackendDataFrame peaksData
+#' @export
+#'
+align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL,
+                       return_ref=FALSE, ...){
   args_methods = list(...)
 
   if (is.null(args_methods$allowNoMatches)) args_methods$allowNoMatches = F
@@ -188,12 +233,13 @@ align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL, 
 
   if (is.null(reference)){
     if (is.null(minFreq)) minFreq=0.9
-    reference = intRefPeaks(
+    reference = int_ref_peaks(
       mpl,
       minFreq = minFreq,
       method = "strict",
       tolerance = tolerance,
-      labels = labels
+      labels = labels,
+      ret.object = 'MassPeaks'
     )
   }
 
@@ -209,7 +255,7 @@ align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL, 
   # l = binPeaks(l, method = "relaxed", tolerance = tolerance)
 
   # Create new Spectra with MsBackendDataFrame and aligned spectra
-  spd = spectraData(sps_mzr)
+  spd = spectraData(s)
   spd$mz = lapply(mpl, MALDIquant::mass)
   spd$intensity = lapply(mpl, MALDIquant::intensity)
   peaks_vars = c('mz', 'intensity')
@@ -220,7 +266,9 @@ align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL, 
   s_aligned = Spectra(
     spd, backend = MsBackendDataFrame(), centroided=TRUE,
     peaksVariables = peaks_vars)
-  return(s_aligned)
+
+  if (return_ref)  return(list(s_aligned, reference))
+  else return(s_aligned)
 }
 
 
@@ -244,9 +292,10 @@ bin_peaks = function(s, method=c("strict", "relaxed", "reference"), tolerance=0.
 
   mpl = binPeaks(mpl, method, tolerance)
 
-  spd = spectraData(sps_mzr)
+  spd = spectraData(s)
   spd$mz = lapply(mpl, MALDIquant::mass)
   spd$intensity = lapply(mpl, MALDIquant::intensity)
+  spd$peaksCount = sapply(mpl, function(x)length(x@mass))
   peaks_vars = c('mz', 'intensity')
   if ('SNR' %in% colnames(peaks[[1]])) {
     spd$SNR = lapply(peaks, "[", ,3)
@@ -258,6 +307,44 @@ bin_peaks = function(s, method=c("strict", "relaxed", "reference"), tolerance=0.
   return(s_binned)
 }
 
+
+#' Find monoisotopic peaks
+#' It is a wrapper on [MALDIquant::monoisotopicPeaks] to work with Spectra objects
+#'
+#' @param s
+#' @param minCor
+#' @param tolerance
+#' @param distance
+#' @param size
+#'
+#' @return
+#' @export
+#' @importFrom MALDIquant monoisotopicPeaks mass intensity
+#' @examples
+monoisotopic_peaks = function(s, ...) {
+  # Apply processing queue
+  peaks = peaksData(s)
+  # Transform into MALDIquant MassPeaksList
+  mpl = asMassPeaksList(peaks)
+
+  mpl = monoisotopicPeaks(mpl, ...)
+
+  spd = spectraData(s)
+  spd$mz = lapply(mpl, MALDIquant::mass)
+  spd$intensity = lapply(mpl, MALDIquant::intensity)
+  spd$peaksCount = sapply(mpl, function(x)length(x@mass))
+  peaks_vars = c('mz', 'intensity')
+
+  if ('SNR' %in% colnames(peaks[[1]])) {
+    spd$SNR = lapply(peaks, "[", ,3)
+    peaks_vars = c(peaks_vars, 'SNR')
+  }
+
+  s_mono = Spectra(
+    spd, backend = MsBackendDataFrame(), centroided=TRUE,
+    peaksVariables = peaks_vars)
+  return(s_mono)
+}
 
 
 #' Filter peaks
@@ -278,11 +365,12 @@ filter_peaks = function(s, minFrequency, minNumber, labels, mergeWhitelists=FALS
   # Transform into MALDIquant MassPeaksList
   mpl = asMassPeaksList(peaks)
 
-  mpl = filterPeaks(mpl,  minFrequency, minNumber, labels, mergeWhitelists=FALSE)
+  mpl = filterPeaks(mpl,  minFrequency, minNumber, labels, mergeWhitelists=mergeWhitelists)
 
-  spd = spectraData(sps_mzr)
+  spd = spectraData(s)
   spd$mz = lapply(mpl, MALDIquant::mass)
   spd$intensity = lapply(mpl, MALDIquant::intensity)
+  spd$peaksCount = sapply(mpl, function(x)length(x@mass))
   peaks_vars = c('mz', 'intensity')
   if ('SNR' %in% colnames(peaks[[1]])) {
     spd$SNR = lapply(peaks, "[", ,3)
@@ -294,6 +382,19 @@ filter_peaks = function(s, minFrequency, minNumber, labels, mergeWhitelists=FALS
   return(s_filtered)
 }
 
+
+#' Count peaks in each spectra
+#'
+#' @param s
+#'
+#' @return A vector of integers with the number of peaks
+#' @export
+#'
+#' @examples
+count_peaks = function(s) {
+  peaks = peaksData(s)
+  return(sapply(peaks, nrow))
+}
 
 #' Intensity matrix
 #'

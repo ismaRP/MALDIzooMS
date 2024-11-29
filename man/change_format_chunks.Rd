@@ -14,7 +14,7 @@ change_format_chunks(
   sep = "\\t",
   mc.cores = 4,
   nchunks = 80,
-  verbose = NULL
+  verbose = FALSE
 )
 }
 \arguments{

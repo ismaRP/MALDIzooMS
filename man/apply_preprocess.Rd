@@ -4,10 +4,22 @@
 \alias{apply_preprocess}
 \title{Applies processing queue to Spectra}
 \usage{
-apply_preprocess(s, write_data = FALSE, file = NULL)
+apply_preprocess(
+  s,
+  in_memory = TRUE,
+  write_data = FALSE,
+  file = NULL,
+  ncores = NULL,
+  BPPARAM = NULL
+)
 }
 \arguments{
 \item{s}{Spectra object}
+
+\item{in_memory}{logical. `in_memory` is `TRUE` keeps the peaks data in memory using
+a [Spectra::MsBackendDataFrame]. If `FALSE`, peaks data are kept on disk
+un a MzML file using the [Spectra::MsBackendMzR]. If `FALSE`, `write_data` is
+overridden and the spectra is written to file.}
 
 \item{write_data}{logical. Whether to write spectra data into a file
 This will apply processing, export spectra into mzML file(s) and
@@ -16,13 +28,24 @@ if we want to apply preprocessing and the resulting object is still
 too big to keep in memory, either because there are too many spectra
 or because we still haven't picked peaks.}
 
-\item{file}{If `write_data` is `TRUE`, file or files to write spectra.
+\item{file}{If `write_data` is `TRUE`, or `in_memory` is `FALSE`,
+required file or files to write spectra.
 IF there is one file, all spectra is saved on the same file.
 If multiple files, there needs to be one per spectra.}
+
+\item{ncores}{Number of cores for parallel processing of the newly created
+Spectra object. It can also be specified using ncores in the metadata
+slot of `s`. If both are specified, the value of the function argument
+takes precedence.
+If both are `NULL`, it is set to the maximum available cores - 2
+with `parallel::detectCores() - 2`. See [parallel::detectCores()]}
+
+\item{BPPARAM}{bpparam of the newly created Spectra object. Default is
+[BiocParallel::MulticoreParam] with `ncores`.}
 }
 \value{
-A Spectra object with either [Spectra::MsBackendMzR] or
-[Spectra::MsBackendDataFrame] backends
+A Spectra object with either [Spectra::MsBackendMzR] (`in_memory=FALSE`) or
+[Spectra::MsBackendDataFrame] (`ìn_memory=TRUE`) backends
 }
 \description{
 Applies processing queue to Spectra

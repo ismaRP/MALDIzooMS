@@ -6,12 +6,14 @@
 \usage{
 collect_triplicates(
   platemap,
-  format = c("wide", "long"),
+  in_pivot = c("wide", "long"),
   basepath = "",
   ext = NULL,
   outfolder = NULL,
+  out_pivot = c("long", "wide"),
   keep_dupl = T,
   keep_incomplete_tripl = T,
+  ext_in_folder = FALSE,
   dry_run = F
 )
 }
@@ -30,7 +32,7 @@ It can contain the following columns:
   \item date (optionl): the date each plate was spotted or analyzed.
 }}
 
-\item{format}{Whether the platemap is in "wide" or "long" format.
+\item{in_pivot}{Whether the platemap is in "wide" or "long" format.
 In the wide format, each row is one sample and the coordinates of the
 replicates are in different columns as spot1, spot2, ...
 In the long format, each row is an individual replicate. In this case, the
@@ -44,13 +46,18 @@ Long format assumes no duplicates.}
 
 \item{outfolder}{Destination path for renamed spectra.}
 
+\item{out_pivot}{Whether to return the platemap in "wide" or "long" format.}
+
 \item{keep_dupl}{Logical. Should duplicate samples/replicates be kept? If so, a suffix is added.
 The suffix has this form: "__#".}
 
 \item{keep_incomplete_tripl}{Logical. When samples come in triplicates, whether incomplete triplicates
 should be skipped.}
 
-\item{dry_run}{Don't copy spectra, just return an updated platemap, with possible duplicates
+\item{ext_in_folder}{Logical. Whether the platemap folder name has the extension in it, e.g.
+20180727_SS08.txt where SS08 is the plate name.}
+
+\item{dry_run}{Logical. Don't copy spectra, just return an updated platemap, with possible duplicates
 included, in long format and with input and output filenames}
 }
 \value{

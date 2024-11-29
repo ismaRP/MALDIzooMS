@@ -62,11 +62,12 @@ initialize_mzml_header = function() {
 #' @param verbose Print progress bar
 #'
 #' @return NULL
+#' @importFrom mzR openMSfile
 #' @export
 #'
 change_format_chunks = function(spectra_names, indir, in_ext, readf, outpath,
                                 writef, sep='\t', mc.cores=4, nchunks = 80,
-                                verbose=NULL){
+                                verbose=FALSE){
   switch(EXPR = readf,
          "fread" = {
            read_f = function(sep){
@@ -156,17 +157,21 @@ rw_chunk_mzml = function(x, ch, indir, read_f, outpath, in_ext, pb) {
   # Write to outpath
   # outfiles = sub(pattern="\\.[[:alnum:]]+?$|(/|\\\\)+[^.\\\\/]+$",
   #                replacement="", x=x)
-  isFile = fs::is_file(outpath)
+  isFile = !isTRUE(file.info(outpath)$isdir)
   if (!isFile) { # save multiple  files in outpath
+    cat(sprintf('Saving spectra in multiple mzML files in %s folder', outpath))
     invisible(mapply(
-      export_mzml, l, x,
+      export_mzml, l, x, 1,
       MoreArgs = list(outpath = outpath, header_template = header_template)))
   } else {
+    cat(sprintf('Saving all spectra into %s', outpath))
+    idx = seq(1:length(l))
     headers_df = bind_rows(mapply(
-      generate_header, l, x, MoreArgs = list(header_template = header_template)
+      generate_header, l, x, idx, MoreArgs = list(header_template = header_template),
+      SIMPLIFY = FALSE
     ))
     writeMSData(l, file = outpath, header = headers_df,
-                backend = 'pwiz', ouformat = 'mzml')
+                backend = 'pwiz', outformat = 'mzml')
   }
 
   if (!is.null(pb)) {
@@ -175,12 +180,16 @@ rw_chunk_mzml = function(x, ch, indir, read_f, outpath, in_ext, pb) {
 }
 
 
-generate_header = function(x, id, header_template){
+generate_header = function(x, id, idx, header_template){
+  header_template$seqNum = idx
   header_template$peaksCount = nrow(x)
   header_template$lowMZ = min(x[,1])
   header_template$highMZ = max(x[,1])
   header_template$totIonCurrent = sum(x[,2])
   header_template$spectrumId = id
+  max_idx = which.max(x[,2])
+  header_template$basePeakMZ = x[max_idx,1]
+  header_template$basePeakIntensity = x[max_idx,2]
   return(header_template)
 }
 
@@ -278,8 +287,8 @@ export_tsv = function(l, path) {
 #' @export
 #' @importFrom mzR writeMSData
 #'
-export_mzml = function(x, id, outpath, header_template) {
-  header = generate_header(x, id, header_template)
+export_mzml = function(x, id, idx, outpath, header_template) {
+  header = generate_header(x, id, idx, header_template)
   outfile = paste0(id, '.mzML')
   outfile = file.path(outpath, outfile)
   writeMSData(list(x), header = header, file = outfile,

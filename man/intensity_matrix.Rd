@@ -8,6 +8,8 @@ intensity_matrix(s, specvar_to_names)
 }
 \arguments{
 \item{s}{Spectra object}
+
+\item{specvar_to_names}{}
 }
 \description{
 Turns the list of peaks into an intensity matrix with samples/spectra as rows

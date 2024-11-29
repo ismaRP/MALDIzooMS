@@ -2,18 +2,45 @@
 % Please edit documentation in R/align_peaks.R
 \name{align_peaks}
 \alias{align_peaks}
-\title{Align peaks}
+\title{Align Peaks in Spectra}
 \usage{
-align_peaks(s, tolerance, minFreq = NULL, reference = NULL, labels = NULL, ...)
+align_peaks(
+  s,
+  tolerance,
+  minFreq = NULL,
+  reference = NULL,
+  labels = NULL,
+  return_ref = FALSE,
+  ...
+)
 }
 \arguments{
-\item{s}{Spectra object. Must be centroided}
+\item{s}{A `Spectra` object containing the spectral data to be aligned.}
 
-\item{...}{}
+\item{tolerance}{A numeric value specifying the m/z tolerance for peak matching.}
+
+\item{minFreq}{A numeric value between 0 and 1 representing the minimum frequency of a peak across spectra for it to be considered a reference peak. Defaults to 0.9 if `reference` is `NULL`.}
+
+\item{reference}{An optional `MassPeaks` object to be used as the reference for alignment. If `NULL`, a reference is created based on `minFreq`.}
+
+\item{labels}{Optional labels for the reference peaks.}
+
+\item{return_ref}{Logical. If `TRUE`, the function returns a list with the aligned spectra and the reference peaks. Defaults to `FALSE`.}
+
+\item{...}{Additional arguments to control alignment behavior. Supported arguments:
+- `allowNoMatches`: Logical, if `TRUE`, allows no matches in warping functions.
+- `emptyNoMatches`: Logical, if `TRUE`, inserts empty values for unmatched peaks in the output.}
 }
 \value{
-A Spectra object with MsBackendDataFrame
+If `return_ref = FALSE`, returns an aligned `Spectra` object. If `return_ref = TRUE`, returns a list containing the aligned `Spectra` object and the reference peaks.
 }
 \description{
-Prior aligning, all processing queue is applied
+This function aligns peaks across spectra using a specified tolerance and optionally a reference peak list.
+}
+\details{
+The function first processes the peaks in `s`, and if no reference is provided, it generates one based on `minFreq`. The function applies warping functions determined by the `determineWarpingFunctions` function and then aligns the spectra.
+}
+\examples{
+# Example usage:
+# align_peaks(spectra, tolerance = 0.1)
 }

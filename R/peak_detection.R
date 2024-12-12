@@ -109,12 +109,27 @@ peaks_local_bg = function(x, mass_range, bg_cutoff, l_cutoff,
 
   l_values = mapply(
     function(m, i) {
-      bg = intensities[which(abs(m-masses)<mass_range)]
-      n = length(bg)
-      if (n < min_bg_peaks) return(0)
-      int_cutoff = quantile(bg, bg_cutoff)
-      bg = bg[bg < int_cutoff]
-      sd0 = sqrt((n-1)/n)*sd(bg)
+      neighbor_peaks = intensities[which(abs(m-masses)<mass_range)]
+      n = length(neighbor_peaks)
+      if (n < min_bg_peaks) {
+        return(0)
+      }
+      int_cutoff = quantile(neighbor_peaks, bg_cutoff)
+      bg = neighbor_peaks[neighbor_peaks <= int_cutoff]
+      # Checks for special cases
+      std_dev = sd(bg)
+      if (is.na(std_dev)) {
+        return(0)
+      } else if (std_dev == 0) {
+        if (i < int_cutoff) {
+          # The current peak is equal to a constant background
+          return(1)
+        } else {
+          # The current peak is above this constant noise level
+          return(0)
+        }
+      }
+      sd0 = sqrt((n-1)/n)*std_dev
       mx = mean(bg)
       l = pnorm(i, mean = mx, sd = sd0, lower.tail = F)
       return(l)
@@ -124,7 +139,9 @@ peaks_local_bg = function(x, mass_range, bg_cutoff, l_cutoff,
   # adj_pval = p.adjust(l_values[,1], 'holm')
   # l_values = cbind(l_values, adj_pval)
   peaks_mask = l_values < l_cutoff
+  cn = c(colnames(x), 'bg_likelihood')
   x = cbind(x[peaks_mask, ], l_values[peaks_mask])
+  colnames(x) = cn
 
   return(x)
 }
@@ -154,6 +171,7 @@ peakLocalNoiseModel = function(s, apply_queue=FALSE, calc_frac=FALSE,...) {
   }
 
   dots_args = list(...)
+
   pl_args = dots_args[c('mass_range', 'bg_cutoff', 'l_cutoff', 'int_index')]
   pl_args = pl_args[!sapply(pl_args, is.null)]
   pl_args[['object']] = s
@@ -177,6 +195,39 @@ peakLocalNoiseModel = function(s, apply_queue=FALSE, calc_frac=FALSE,...) {
   return(s)
 }
 
+
+#' Filter by SNR threshold
+#'
+#' @param x peaks matrix
+#' @param snr signal-to-noise threshold
+#' @param ...
+#'
+#' @return peaks matrix
+#' @export
+#'
+#' @examples
+filter_snr = function(x, snr, ...) {
+  filt = x[['SNR']] > snr
+  x = x[filt,]
+  return(x)
+}
+
+#' Filter peaks in Spectra object by SNR
+#'
+#' @param s Spectra object
+#' @param snr signal-to-noise threshold
+#'
+#' @return Spectra object
+#' @export
+#' @importFrom Spectra addProcessing
+#'
+#' @examples
+filterSNR = function(s, snr) {
+  s = addProcessing(s, filter_snr, snr=snr)
+  s = apply_preprocess(
+    s, in_memory=TRUE, write_data=FALSE)
+  return(s)
+}
 
 
 #' Peak detection

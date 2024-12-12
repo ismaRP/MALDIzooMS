@@ -166,10 +166,8 @@ apply_preprocess = function(
   if (is.null(BPPARAM)) {
     if (is.null(s@metadata$ncores) & is.null(ncores)) {
       ncores = multicoreWorkers()
-      cat(sprintf('Setting ncores: %d\n', ncores))
     } else if (!is.null(s@metadata$ncores) & is.null(ncores)){
       ncores = s@metadata$ncores
-      cat(sprintf('Using ncores from Spectra object: %d\n', ncores))
     }
     BPPARAM = MulticoreParam(workers=ncores)
   }

@@ -45,7 +45,7 @@ with `parallel::detectCores() - 2`. See [parallel::detectCores()]}
 }
 \value{
 A Spectra object with either [Spectra::MsBackendMzR] (`in_memory=FALSE`) or
-[Spectra::MsBackendDataFrame] (`ìn_memory=TRUE`) backends
+[Spectra::MsBackendMemory] (`ìn_memory=TRUE`) backends
 }
 \description{
 Applies processing queue to Spectra

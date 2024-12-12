@@ -5,10 +5,18 @@
 \title{Find monoisotopic peaks
 It is a wrapper on [MALDIquant::monoisotopicPeaks] to work with Spectra objects}
 \usage{
-monoisotopic_peaks(s, ...)
+monoisotopic_peaks(s, ppm, ...)
 }
 \arguments{
-\item{size}{}
+\item{s}{Spectra object}
+
+\item{ppm}{tolerance in parts per million}
+
+\item{...}{\itemize{
+   \item minCor
+   \item distance
+   \item size
+}}
 }
 \description{
 Find monoisotopic peaks

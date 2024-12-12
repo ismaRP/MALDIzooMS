@@ -9,11 +9,8 @@
 #'
 asMassPeaksList = function(pl) {
   maldiquant_pl = lapply(
-    pl, function(x){
-      mz = x[,1]
-      int = x[,2]
-      createMassPeaks(mz, int)
-    })
+    pl, function(x) createMassPeaks(x[,1], x[,2])
+  )
   names(maldiquant_pl) = names(pl)
   return(maldiquant_pl)
 }

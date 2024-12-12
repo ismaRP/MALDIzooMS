@@ -293,7 +293,7 @@ plot_platemap = function(pl, plt_var, max_row=NULL, max_col=NULL, plate_id='',
   names(letters_pos) = LETTERS[1:26]
   pl$row = map_int(pl$row_letter, function(x) letters_pos[x])
   if (is.null(max_row)) max_row = max(pl$row)
-  if (is.null(max_col)) max_row = max(pl$column)
+  if (is.null(max_col)) max_col = max(pl$column)
 
   plate_matrix = matrix(NA, nrow = max_row, ncol=max_col)
   names_matrix = matrix('', nrow = max_row, ncol=max_col)
@@ -316,7 +316,6 @@ plot_platemap = function(pl, plt_var, max_row=NULL, max_col=NULL, plate_id='',
            cluster_rows = F, cluster_cols = F,
            color = viridis(n_viridis), angle_col=0)
 
-  return(names_matrix)
 }
 
 

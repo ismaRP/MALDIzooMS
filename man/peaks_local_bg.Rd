@@ -12,7 +12,8 @@ peaks_local_bg(x, mass_range, bg_cutoff, l_cutoff, int_index = 2L, ...)
 
 \item{mass_range}{Mass window to both sides of a peak to be considered for backgroun modelling}
 
-\item{bg_cutoff}{The peaks within the mass range with intensity below the \code{bg_cutoff} quantile
+\item{bg_cutoff}{Numeric between 0 and 1.
+The peaks within the mass range with intensity below the \code{bg_cutoff}*100 quantile
 are considered for background modelling. \code{bg_cutoff=1} keeps all peaks
 and \code{bg_cutoff=0.5} would only keep the bottom half.}
 

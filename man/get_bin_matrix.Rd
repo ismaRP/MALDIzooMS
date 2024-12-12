@@ -4,10 +4,10 @@
 \alias{get_bin_matrix}
 \title{Get binary matrix}
 \usage{
-get_bin_matrix(s)
+get_bin_matrix(m)
 }
 \arguments{
-\item{s}{}
+\item{m}{intensity matrix}
 }
 \description{
 Get binary matrix

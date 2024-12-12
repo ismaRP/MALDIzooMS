@@ -11,6 +11,7 @@ align_peaks(
   reference = NULL,
   labels = NULL,
   return_ref = FALSE,
+  return_warp = FALSE,
   ...
 )
 }
@@ -26,6 +27,8 @@ align_peaks(
 \item{labels}{Optional labels for the reference peaks.}
 
 \item{return_ref}{Logical. If `TRUE`, the function returns a list with the aligned spectra and the reference peaks. Defaults to `FALSE`.}
+
+\item{return_warp}{Whether warping functions are returned, added as a Spectra varaible}
 
 \item{...}{Additional arguments to control alignment behavior. Supported arguments:
 - `allowNoMatches`: Logical, if `TRUE`, allows no matches in warping functions.

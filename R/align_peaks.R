@@ -1,64 +1,6 @@
 
 
 
-#' Title
-#'
-#' @param m
-#'
-#' @return
-#'
-#' @examples
-as.binary.matrix = function(m){
-  stopifnot(is.matrix(m))
-  isNA = which(is.na(m))
-  m[] = 1L
-  m[isNA] = 0L
-  mode(m) = "integer"
-  m
-}
-
-
-#' Title
-#'
-#' @param l
-#'
-#' @return
-#'
-#' @examples
-as.matrix.MassObjectList = function(l){
-  mass = unlist(
-    lapply(l, function(x)x@mass),
-    recursive=FALSE, use.names=FALSE)
-  intensity = unlist(lapply(l, function(x)x@intensity),
-                     recursive=FALSE, use.names=FALSE)
-  uniqueMass = sort.int(unique(mass))
-  n = lengths(l)
-  r = rep.int(seq_along(l), n)
-
-  i = findInterval(mass, uniqueMass)
-
-  m = matrix(NA_real_, nrow=length(l), ncol=length(uniqueMass),
-             dimnames=list(NULL, uniqueMass))
-  m[cbind(r, i)] = intensity
-  attr(m, "mass") = uniqueMass
-  m
-}
-
-#' Get binary matrix
-#'
-#' @param s
-#'
-#' @return
-#' @export
-#'
-#' @examples
-get_bin_matrix = function(s) {
-  mpl = asMassPeaksList(peaksData(s))
-  m = as.binary.matrix(as.matrix.MassObjectList(mpl))
-  return(m)
-}
-
-
 #' Build internal reference spectrum
 #'
 #' @param mpl MassPeaksList object
@@ -204,6 +146,7 @@ ext_ref_peaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 
 #' @param reference An optional `MassPeaks` object to be used as the reference for alignment. If `NULL`, a reference is created based on `minFreq`.
 #' @param labels Optional labels for the reference peaks.
 #' @param return_ref Logical. If `TRUE`, the function returns a list with the aligned spectra and the reference peaks. Defaults to `FALSE`.
+#' @param return_warp Whether warping functions are returned, added as a Spectra varaible
 #' @param ... Additional arguments to control alignment behavior. Supported arguments:
 #'   - `allowNoMatches`: Logical, if `TRUE`, allows no matches in warping functions.
 #'   - `emptyNoMatches`: Logical, if `TRUE`, inserts empty values for unmatched peaks in the output.
@@ -221,7 +164,7 @@ ext_ref_peaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 
 #' @export
 #'
 align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL,
-                       return_ref=FALSE, ...){
+                       return_ref=FALSE, return_warp=FALSE,...){
   args_methods = list(...)
 
   if (is.null(args_methods$allowNoMatches)) args_methods$allowNoMatches = F
@@ -266,6 +209,7 @@ align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL,
   s_aligned = Spectra(
     spd, backend = MsBackendDataFrame(), centroided=TRUE,
     peaksVariables = peaks_vars)
+  if (return_warp) s_aligned$warpFunc = warpingFunctions
 
   if (return_ref)  return(list(s_aligned, reference))
   else return(s_aligned)
@@ -310,24 +254,24 @@ bin_peaks = function(s, method=c("strict", "relaxed", "reference"), tolerance=0.
 
 #' Find monoisotopic peaks
 #' It is a wrapper on [MALDIquant::monoisotopicPeaks] to work with Spectra objects
-#'
-#' @param s
-#' @param minCor
-#' @param tolerance
-#' @param distance
-#' @param size
-#'
+#' @param s Spectra object
+#' @param ppm tolerance in parts per million
+#' @param ...
+#' \itemize{
+#'    \item minCor
+#'    \item distance
+#'    \item size
+#' }
 #' @return
 #' @export
 #' @importFrom MALDIquant monoisotopicPeaks mass intensity
 #' @examples
-monoisotopic_peaks = function(s, ...) {
+monoisotopic_peaks = function(s, ppm, ...) {
   # Apply processing queue
   peaks = peaksData(s)
   # Transform into MALDIquant MassPeaksList
   mpl = asMassPeaksList(peaks)
-
-  mpl = monoisotopicPeaks(mpl, ...)
+  mpl = monoisotopicPeaks(mpl, tolerance=ppm*1e-6, ...)
 
   spd = spectraData(s)
   spd$mz = lapply(mpl, MALDIquant::mass)
@@ -416,6 +360,27 @@ intensity_matrix = function(s, specvar_to_names) {
   # Transform into MALDIquant MassPeaksList
   mpl = asMassPeaksList(peaks)
   m = intensityMatrix(mpl)
-  rownames(m) = s[[specvar_to_names]]
+  # rownames(m) = s[[specvar_to_names]]
+  attr(m, 'mass') = round(attr(m, 'mass'), 2)
+  colnames(m) = attr(m, 'mass')
+  return(m)
+}
+
+
+
+#' Get binary matrix
+#'
+#' @param m intensity matrix
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_bin_matrix = function(m) {
+  stopifnot(is.matrix(m))
+  wn = is.na(m)
+  m[wn] = 0L
+  m[!wn] = 1L
+  mode(m) = "integer"
   return(m)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/format_spectra.R
 \name{rw_chunk_tsv}
 \alias{rw_chunk_tsv}
-\title{Reads data in writes in mzML format}
+\title{Reads data in writes in tsv format}
 \usage{
 rw_chunk_tsv(x, ch, indir, read_f, outpath, in_ext, pb)
 }

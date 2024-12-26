@@ -4,7 +4,17 @@
 \alias{rw_chunk_mzml}
 \title{Reads data in writes in mzML format}
 \usage{
-rw_chunk_mzml(x, ch, indir, read_f, outpath, in_ext, pb)
+rw_chunk_mzml(
+  x,
+  ch,
+  in_files,
+  out_files,
+  out_names,
+  read_f,
+  many_to_one,
+  add_ext,
+  BPPARAM
+)
 }
 \description{
 Internal use only. Use [change_format_chunks] instead

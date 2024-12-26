@@ -5,37 +5,42 @@
 \title{Change MALDI-TOF data format}
 \usage{
 change_format_chunks(
-  spectra_names,
-  indir,
-  in_ext,
-  readf,
-  outpath,
-  writef,
+  spectra_in,
+  spectra_out = NULL,
+  outpath = NULL,
+  readf = NULL,
+  indir = NULL,
+  in_ext = NULL,
+  writef = NULL,
   sep = "\\t",
-  mc.cores = 4,
+  ncores = 4,
   nchunks = 80,
   verbose = FALSE
 )
 }
 \arguments{
-\item{spectra_names}{File names to transform (without extension)}
+\item{spectra_in}{File names or paths to transform (with or without extension)}
 
-\item{indir}{Path to data folder}
+\item{spectra_out}{Names of the spectra to go in the output. These can either constitute
+filenames and/or spectrumId in a mzML file.}
 
-\item{in_ext}{Extension of input files}
+\item{outpath}{Destination path}
 
 \item{readf}{Input format reading function. One of \code{'fread'}, \code{'table'}
 or \code{'mzML'}. \code{'fread'} uses [data.table::fread()],
 \code{'table'} uses [utils::read.table()] and \code{mzML} uses [mzR::openMSfile()].}
 
-\item{outpath}{Destination path}
+\item{indir}{Path to data folder. If `NULL`, it assumes `spectra_in` contains whole
+paths to files.}
+
+\item{in_ext}{Extension of input files}
 
 \item{writef}{Output format writing function. one of 'tab' or 'mzML'.
 Determines the destination format of the files.}
 
 \item{sep}{Separator for tsv input files. Default is \code{"\t"}}
 
-\item{mc.cores}{Number of cores to use}
+\item{ncores}{Number of cores to use}
 
 \item{nchunks}{Number of chunks to split the files into}
 

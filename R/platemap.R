@@ -269,12 +269,11 @@ clean_metadata = function(metadata, folder) {
 
 #' Plot spectra value in platemap
 #'
-#' @param pl platemap with two columns, spot and a numeric value to plot
-#' @param plt_var
-#' @param max_row
-#' @param max_col
+#' @param pl platemap with at least two columns, 'spot' and `plt_var`, a numeric value to plot
+#' @param plt_var Nanme of the variable from `pl` to plot
+#' @param max_row Maximum number of rows in the platemap
+#' @param max_col Maximum number of columns in the platemap
 #'
-#' @return
 #' @export
 #' @importFrom tidyr separate_wider_regex
 #' @importFrom dplyr mutate
@@ -282,7 +281,6 @@ clean_metadata = function(metadata, folder) {
 #' @importFrom viridis viridis
 #' @importFrom magrittr %>%
 #'
-#' @examples
 plot_platemap = function(pl, plt_var, max_row=NULL, max_col=NULL, plate_id='',
                          n_viridis=100L) {
   pl = pl %>%

@@ -4,15 +4,22 @@
 \alias{atipicalitySpectra}
 \title{Identification of potentially low-quality raw mass spectra}
 \usage{
-atipicalitySpectra(s)
+atipicalitySpectra(s, labels = NULL, BPPARAM = bpparam())
 }
 \arguments{
-\item{object}{[Spectra::Spectra()] object}
+\item{s}{Spectra object}
+
+\item{labels}{factor to do groupwise calculation of A-score limits for flagging
+spectra.}
+
+\item{BPPARAM}{Parallel computing configuration from \link{BiocParallel}. Default is
+is \code{\link[BiocParallel:register]{BiocParallel::bpparam()}}}
 }
 \value{
-A [Spectra::Spectra()] object with \code{QCflag} spectrum variable added
+A list with \code{\link[Spectra:Spectra]{Spectra::Spectra()}} object with \code{QCflag} spectrum
+variable added and the atipicality limits for flagging.
 }
 \description{
-Uses [atipicality_spectra], which implements [MALDIrppa::screenSpectra()] on
-peak matrix
+Uses \link{atipicality_spectra}, which implements \code{\link[MALDIrppa:screenSpectra]{MALDIrppa::screenSpectra()}} on
+peak matrix. It can calculate calculate lower and upper A limits by label.
 }

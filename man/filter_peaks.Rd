@@ -2,13 +2,29 @@
 % Please edit documentation in R/align_peaks.R
 \name{filter_peaks}
 \alias{filter_peaks}
-\title{Filter peaks}
+\title{Filter peaks based on their frequency in the set of spectra}
 \usage{
-filter_peaks(s, minFrequency, minNumber, labels, mergeWhitelists = FALSE)
+filter_peaks(s, ...)
 }
 \arguments{
-\item{mergeWhitelists}{}
+\item{s}{\link[Spectra:Spectra]{Spectra::Spectra} object}
+
+\item{...}{Parameters passed to \link[MALDIquant:filterPeaks-functions]{MALDIquant::filterPeaks}
+\itemize{
+\item minFrequency Minimum frequency (0 to 1) threshold for a peak to be kept
+\item minNumber Absolute frquency, similar to \code{minFrequency}, but with
+absolute number of spectra
+\item labels \code{factor} for groupwise filtering. \code{minFrequency} and \code{minNumber}
+are considered within each group.
+\item mergeWhitelists \code{logical}, such that when \code{TRUE} and applying groupwise
+filtering with \code{labels}, peaks that pass the filter in one group, are also kept
+or whitelisted in other groups, even if their frequencies are below
+\code{minFrequency} or \code{minNumber}.
+}}
+}
+\value{
+\link[Spectra:Spectra]{Spectra::Spectra} object after peak filtering
 }
 \description{
-Filter peaks
+It uses \link[MALDIquant:filterPeaks-functions]{MALDIquant::filterPeaks}
 }

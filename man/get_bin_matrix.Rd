@@ -9,6 +9,9 @@ get_bin_matrix(m)
 \arguments{
 \item{m}{intensity matrix}
 }
+\value{
+Binary, 0-1 \code{matrix}
+}
 \description{
 Get binary matrix
 }

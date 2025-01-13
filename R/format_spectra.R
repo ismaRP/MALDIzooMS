@@ -425,7 +425,7 @@ export_tsv = function(l, path) {
   ))
 }
 
-#' Export a matrix into mzML using [mzR::writeMSdata]
+#' Export a matrix into mzML using [mzR::writeMSData]
 #'
 #' @param x Matrix with mz and intensities
 #' @param id Spectra ID

@@ -15,5 +15,5 @@ import_tsv(f, sep = "\\t")
 Matrix with mz and intensities
 }
 \description{
-Uses [data.table::fread]
+Uses \link[data.table:fread]{data.table::fread}
 }

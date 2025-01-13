@@ -4,12 +4,17 @@
 \alias{intensity_matrix}
 \title{Intensity matrix}
 \usage{
-intensity_matrix(s, specvar_to_names)
+intensity_matrix(s, specvar_to_names = NULL)
 }
 \arguments{
-\item{s}{Spectra object}
+\item{s}{Spectra or MassPeaks object}
 
-\item{specvar_to_names}{}
+\item{specvar_to_names}{Spectra variable to use as rownames of the
+intensity matrix}
+}
+\value{
+\code{matrix} with samples as rows and masses as columns, filled with
+intensity values
 }
 \description{
 Turns the list of peaks into an intensity matrix with samples/spectra as rows

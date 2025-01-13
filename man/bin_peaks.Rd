@@ -4,11 +4,33 @@
 \alias{bin_peaks}
 \title{Bin peaks across spectra}
 \usage{
-bin_peaks(s, method = c("strict", "relaxed", "reference"), tolerance = 0.002)
+bin_peaks(
+  s,
+  method = c("strict", "relaxed", "reference"),
+  tolerance = 0.002,
+  ppm = NULL
+)
 }
 \arguments{
-\item{tolerance}{}
+\item{s}{Spectra object}
+
+\item{tolerance}{Tolerance deviation value for grouping peaks into the same bin.}
+
+\item{ppm}{Tolerance deviation in ppm. \code{tolerance} is ignored if \code{ppm} is set.}
+
+\item{...}{Paramteres for \link[MALDIquant:binPeaks-functions]{MALDIquant::binPeaks}, currently:
+\itemize{
+\item \code{method} Method for binning: \itemize{
+\item 'strict': A bin cannot contain peaks from the same spectra. In which case,
+it is further split.
+\item 'relaxed': This method allows multiple peaks from the same spectea in the same bin.
+\item 'reference': The spectra are binned around the peaks of the first spectra in 's'
+}
+}}
+}
+\value{
+\link[Spectra:Spectra]{Spectra::Spectra} object
 }
 \description{
-Bin peaks across spectra
+Wrapper on \link[MALDIquant:binPeaks-functions]{MALDIquant::binPeaks} to work on \link[Spectra:Spectra]{Spectra::Spectra} objects.
 }

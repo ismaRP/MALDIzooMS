@@ -23,6 +23,11 @@ preprocessing.}
 to the rest of the spectra.}
 
 \item{mzrange}{mz range to limit plot}
+
+\item{prep_labels}{(optional) character vector with labels for each preprocessing
+step to be plotted}
+
+\item{n_col}{Number of columns in the plot}
 }
 \description{
 Plot Spectra in different preprocessing stages

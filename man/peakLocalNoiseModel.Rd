@@ -3,19 +3,32 @@
 \name{peakLocalNoiseModel}
 \alias{peakLocalNoiseModel}
 \title{Filter a peak list based on likelihood that peaks are above background local
-noise}
+noise.}
 \usage{
 peakLocalNoiseModel(s, apply_queue = FALSE, calc_frac = FALSE, ...)
 }
 \arguments{
-\item{s}{Spectra object}
+\item{s}{Spectra object. Must only contain unfiltered local maxima.}
 
-\item{...}{arguments to [peaks_local_bg]}
+\item{apply_queue}{Logical, whether to apply or not the processing queue
+afterwards. Arguments for \link{apply_preprocess} can be passed.}
 
-\item{calc_frac_kept}{logical. Whether to calculate fraction of peaks kept
-after peak local noise model filtering}
+\item{calc_frac}{Logical, whether to calculate the fraction of local maxima that
+are kept after the local noise model filter is applied.}
+
+\item{...}{arguments to \link{peaks_local_bg} and \link{apply_preprocess}}
+}
+\value{
+\link[Spectra:Spectra]{Spectra::Spectra} object.
 }
 \description{
 Filter a peak list based on likelihood that peaks are above background local
-noise
+noise.
+}
+\details{
+This function must be applied to an unfiltered local maxima matrix such as the one produced
+by \link{peakDetection} with SNR=0.
+
+If \code{apply_queue} is set to TRUE, the processing queue is applied after adding
+the \link{peaks_local_bg} function is added.
 }

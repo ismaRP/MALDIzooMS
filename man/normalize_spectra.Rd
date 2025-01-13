@@ -2,17 +2,22 @@
 % Please edit documentation in R/preprocess.R
 \name{normalize_spectra}
 \alias{normalize_spectra}
-\title{Normalize peak matrix}
+\title{Normalize peaks matrix}
 \usage{
 normalize_spectra(x, scaleFactor = 1, func = NULL, ...)
 }
 \arguments{
-\item{x}{Peak matrix}
+\item{x}{Peaks matrix}
 
 \item{scaleFactor}{Scaling factor}
 
 \item{func}{Function to be applied to the intensities}
+
+\item{...}{Currently not in use, required by \link[Spectra:Spectra]{Spectra::addProcessing,Spectra-method}.}
+}
+\value{
+Peaks matrix
 }
 \description{
-Normalize peak matrix
+Normalize peaks matrix
 }

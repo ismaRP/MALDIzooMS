@@ -14,9 +14,13 @@ plot_platemap(
 )
 }
 \arguments{
-\item{pl}{platemap with two columns, spot and a numeric value to plot}
+\item{pl}{platemap with at least two columns, 'spot' and \code{plt_var}, a numeric value to plot}
 
-\item{max_col}{}
+\item{plt_var}{Nanme of the variable from \code{pl} to plot}
+
+\item{max_row}{Maximum number of rows in the platemap}
+
+\item{max_col}{Maximum number of columns in the platemap}
 }
 \description{
 Plot spectra value in platemap

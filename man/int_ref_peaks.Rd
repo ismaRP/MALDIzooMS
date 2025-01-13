@@ -9,15 +9,35 @@ int_ref_peaks(
   method = c("strict", "relaxed"),
   minFreq = 0.9,
   tolerance = 0.002,
+  ppm = NULL,
   labels = NULL,
   ret.object = c("Spectra", "MassPeaks", "df")
 )
 }
 \arguments{
-\item{mpl}{MassPeaksList object}
+\item{mpl}{MassPeaksList or Spectra object}
 
-\item{labels}{}
+\item{method}{Method for binning peaks across spectra. 'strict' does not allow
+a bin that contains two peaks from the same spectra and would
+split it further, while 'relaxed' would allow it.}
+
+\item{minFreq}{Minimum frequency of a peak in the list of spectra to be added
+to the reference.}
+
+\item{tolerance}{Tolerance deviation value for grouping peaks into the same bin.}
+
+\item{ppm}{Tolerance deviation in ppm. \code{tolerance} is ignored if \code{ppm} is set.}
+
+\item{labels}{Labels for gorupwise peak filtering.}
+
+\item{ret.object}{\code{character}, type of object to return:
+'Spectra', 'MassPeaks', or 'df'}
+}
+\value{
+Reference peak list. The type depends on \code{ret.object}:
+\link[Spectra:Spectra]{Spectra::Spectra}, \link[MALDIquant:MassPeaks-class]{MALDIquant::MassPeaks} or a data frame
 }
 \description{
-Build internal reference spectrum
+It comprises a peak binning followed by filtering step, adapted from \link[MALDIquant:referencePeaks-functions]{MALDIquant::referencePeaks}.
+This function allows to filter peaks groupwise.
 }

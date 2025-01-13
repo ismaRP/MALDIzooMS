@@ -2,7 +2,7 @@
 % Please edit documentation in R/format_spectra.R
 \name{export_mzml}
 \alias{export_mzml}
-\title{Export a matrix into mzML using [mzR::writeMSdata]}
+\title{Export a matrix into mzML using \link[mzR:writeMSData]{mzR::writeMSData}}
 \usage{
 export_mzml(x, outpath, header)
 }
@@ -18,5 +18,5 @@ export_mzml(x, outpath, header)
 \item{header_template}{Header template to complete with spectra data and id}
 }
 \description{
-Export a matrix into mzML using [mzR::writeMSdata]
+Export a matrix into mzML using \link[mzR:writeMSData]{mzR::writeMSData}
 }

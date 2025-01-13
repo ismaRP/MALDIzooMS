@@ -15,7 +15,7 @@ peptide_pseudo_clusters(x, mono_masses, n_isopeaks, min_isopeaks, ...)
 
 \item{min_isopeaks}{Minimum number of isotopic peaks to consider the envelope}
 
-\item{...}{Argumentes passed to [MsCoreUtils::closest]}
+\item{...}{Argumentes passed to \link[MsCoreUtils:matching]{MsCoreUtils::closest}}
 }
 \value{
 Peaks matrix with isotopic masses and NA as place holders for when

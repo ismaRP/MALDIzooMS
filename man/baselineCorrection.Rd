@@ -9,7 +9,7 @@ baselineCorrection(s, ...)
 \arguments{
 \item{s}{Spectra object}
 
-\item{...}{}
+\item{...}{Arguments passed to \link{baseline_correction}}
 }
 \value{
 Spectra object

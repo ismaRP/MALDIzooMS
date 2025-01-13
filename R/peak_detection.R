@@ -1,91 +1,14 @@
-#' Model local backgroung noise around peak
-#'
-#' @param p
-#' Peak as one-row matrix, mass-intensity pair
-#' @param m
-#' Full matrix of mass-intensity pairs
-#' @param mass_range
-#' Mass window to both sides of \code{p} to be considered for backgroun modelling
-#' @param bg_cutoff
-#' The peaks within the mass range with intensity below the \code{bg_cutoff} quantile
-#' are considered for background modelling. \code{bg_cutoff=1} keeps all peaks
-#' and \code{bg_cutoff=0.5} would only keep the bottom half.
-#' @param l_cutoff
-#' Likelihood threshold or p-value. Peaks with a probability of being modelled as
-#' background noise higher than this are filtered out.
-#' @return One-row matrix with p-value, ie., probability of a peak with a higher intensity,
-#' normal distribution fitting log-likelihood and p-value.
-#' @importFrom MASS fitdistr
-#' @importFrom stats dnorm p.adjust pchisq pnorm quantile
-#' @importFrom graphics hist
-#' @export
-#'
-model_local_bg = function(p, bg){
-  fit = fitdistr(bg, 'normal')
 
-  n = length(bg)
-  sd0 = sqrt((n-1)/n)*sd(bg)
-  mx = mean(bg)
-  msd = sd0/sqrt(n)
-  # loglik = sum(dnorm(bg, mx, sd0, log=TRUE))
-  # Chi-square test
-  # h = hist(bg, plot=F, breaks = 20)
-  # binwidth = h$mids[2] - h$mids[1]
-  # co = h$counts
-  # ce = dnorm(h$mids, mean= fit$estimate[1], sd = fit$estimate[2]) * length(bg) * binwidth
-  # chsq = sum((co-ce)^2/ce)
-  # pval = 1 - pchisq(chsq, length(bg)-1)
-
-  l = pnorm(p, mean = mx, sd = sd0, lower.tail = F)
-
-  return(c(l, NA, msd))
-
-}
-
-
-
-# peaks_local_bg = function(x, mass_range, bg_cutoff, l_cutoff
-#                           int_index=2L, ...){
-#   # x = as.matrix(x)
-#   min_bg_peaks = 15
-#   l_values = matrix(NA, nrow=nrow(x), ncol=4)
-#
-#   for (i in 1:nrow(x)) {
-#     p = x[i,]
-#     bg_mask = abs(p[[1]] - x[,1]) <= mass_range
-#     # bg_mask = (x[,1] < (p[1] + mass_range)) & (x[,1] > (p[1] - mass_range))
-#     bg = x[bg_mask, int_index]
-#     int_cutoff = quantile(bg, bg_cutoff)
-#     bg = bg[bg < int_cutoff]
-#     n = length(bg)
-#     if (n < min_bg_peaks) {
-#       ldata = c(0, NA, NA)
-#     } else {
-#       print(p)
-#       print(bg)
-#       print(int_index)
-#       ldata = model_local_bg(p[[int_index]], bg)
-#     }
-#     l_values[i, ] = c(ldata, n)
-#   }
-#
-#   # adj_pval = p.adjust(l_values[,1], 'holm')
-#   # l_values = cbind(l_values, adj_pval)
-#
-#   colnames(l_values) = c("bg_lik", "fit_loglik", "fit_error", 'n_bg')
-#
-#   peaks_mask = l_values[,1] < l_cutoff
-#   x = cbind(x[peaks_mask, ], l_values[peaks_mask,])
-#
-#   return(x)
-# }
 
 
 
 #' Filter a peak list based on likelihood that peaks are above background local
-#' noise
+#' noise.
 #'
-#' @param x Peaks matrix
+#' The function models the noise around a given peak using a normal distribution
+#' and estimates the probability of the peak intensity being greater or equal.
+#'
+#' @param x Peaks matrix containing unfiltered local maxima.
 #' @param mass_range
 #' Mass window to both sides of a peak to be considered for backgroun modelling
 #' @param bg_cutoff
@@ -97,6 +20,7 @@ model_local_bg = function(p, bg){
 #' Likelihood threshold or p-value. Peaks with a probability of being modelled as
 #' background noise higher than this are filtered out.
 #' @param int_index Column where to get intensities from matrix `x`
+#' @param ... Currently not in use, required by [Spectra::addProcessing,Spectra-method].
 #' @return Peak matrix
 #' @export
 #'
@@ -148,18 +72,25 @@ peaks_local_bg = function(x, mass_range, bg_cutoff, l_cutoff,
 
 
 #' Filter a peak list based on likelihood that peaks are above background local
-#' noise
+#' noise.
 #'
-#' @param s Spectra object
-#' @param calc_frac_kept logical. Whether to calculate fraction of peaks kept
-#' after peak local noise model filtering
-#' @param ... arguments to [peaks_local_bg]
+#' @param s Spectra object. Must only contain unfiltered local maxima.
+#' @param apply_queue Logical, whether to apply or not the processing queue
+#'                    afterwards. Arguments for [apply_preprocess] can be passed.
+#' @param calc_frac Logical, whether to calculate the fraction of local maxima that
+#' are kept after the local noise model filter is applied.
+#' @param ... arguments to [peaks_local_bg] and [apply_preprocess]
+#' @details
+#' This function must be applied to an unfiltered local maxima matrix such as the one produced
+#' by [peakDetection] with SNR=0.
 #'
-#' @return
+#' If `apply_queue` is set to TRUE, the processing queue is applied after adding
+#' the [peaks_local_bg] function is added.
+#'
+#' @return [Spectra::Spectra] object.
 #' @export
 #' @importFrom Spectra peaksData
 #'
-#' @examples
 peakLocalNoiseModel = function(s, apply_queue=FALSE, calc_frac=FALSE,...) {
 
   if (!'centroided' %in% spectraVariables(s) | any(s$centroided == FALSE)) {
@@ -200,12 +131,11 @@ peakLocalNoiseModel = function(s, apply_queue=FALSE, calc_frac=FALSE,...) {
 #'
 #' @param x peaks matrix
 #' @param snr signal-to-noise threshold
-#' @param ...
+#' @param ... Currently not in use, required by [Spectra::addProcessing,Spectra-method].
 #'
 #' @return peaks matrix
 #' @export
 #'
-#' @examples
 filter_snr = function(x, snr, ...) {
   filt = x[['SNR']] > snr
   x = x[filt,]
@@ -221,7 +151,6 @@ filter_snr = function(x, snr, ...) {
 #' @export
 #' @importFrom Spectra addProcessing
 #'
-#' @examples
 filterSNR = function(s, snr) {
   s = addProcessing(s, filter_snr, snr=snr)
   s = apply_preprocess(
@@ -250,7 +179,7 @@ filterSNR = function(s, snr) {
 #' @param int_index Index of the intensity in the peak matrix to be used for peak
 #'                  detection.
 #' @param add_snr logical, whether to add a column with each peak's SNR
-#' @param ... Currently not in use, required by [Spectra::addProcessing].
+#' @param ... Currently not in use, required by [Spectra::addProcessing,Spectra-method].
 #'
 #' @return Peak matrix, only containing peaks that fullfill all criteria.
 #' @importFrom MsCoreUtils localMaxima noise refineCentroids
@@ -296,7 +225,6 @@ peak_detection = function(x, halfWindowSize = 2L, method = c("MAD", "SuperSmooth
 #' @importFrom Spectra addProcessing
 #' @export
 #'
-#' @examples
 peakDetection = function(s, apply_queue=FALSE, ...) {
   dots_args = list(...)
 
@@ -312,7 +240,8 @@ peakDetection = function(s, apply_queue=FALSE, ...) {
   s$centroided = TRUE
 
   if (apply_queue) {
-    ap_args = dots_args[c('in_memory', 'write_data', 'file', 'BPPARAM')]
+    ap_args = dots_args[c('in_memory', 'write_data', 'file',
+                          'BPPARAM', 'verbose')]
     ap_args = ap_args[!sapply(ap_args, is.null)]
     ap_args[['s']] = s
     s = do.call(apply_preprocess, ap_args)

@@ -7,10 +7,13 @@
 normalizeSpectra(s, scale_f)
 }
 \arguments{
-\item{s}{Spectra object}
+\item{s}{\link[Spectra:Spectra]{Spectra::Spectra} object}
 
 \item{scale_f}{spectra variable to use as normalization factor or a function
 to be applied to spectra intensities}
+}
+\value{
+\link[Spectra:Spectra]{Spectra::Spectra} object
 }
 \description{
 Normalize spectra object

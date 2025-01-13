@@ -14,7 +14,7 @@ baseline_correction(
 )
 }
 \arguments{
-\item{x}{Peak matrix}
+\item{x}{Peaks matrix}
 
 \item{int_index}{Index of the intensity to calculate the baseline}
 
@@ -26,7 +26,7 @@ If NULL, there is no substraction}
 \item{in_place}{Replace the intensity in \code{substract_index} with the baseline
 substracted intensity}
 
-\item{...}{Arguments passed to [MsCoreUtils::estimateBaseline()]. Currently \code{'method'}.}
+\item{...}{Arguments passed to \code{\link[MsCoreUtils:estimateBaseline]{MsCoreUtils::estimateBaseline()}}. Currently \code{method}.}
 }
 \value{
 Peak matrix. Depending on the arguments, with the baseline-substracted

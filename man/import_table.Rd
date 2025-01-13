@@ -9,13 +9,13 @@ import_table(f, sep = "")
 \arguments{
 \item{f}{Path to file}
 
-\item{sep}{Separator. Default is \code{''}, which for [utils::read.table()] can
+\item{sep}{Separator. Default is \code{''}, which for \code{\link[utils:read.table]{utils::read.table()}} can
 be one or more white spaces or tabs. If you're certain the separator
-is exactly \code{"\t"}, [import_tsv()] is a faster option.}
+is exactly \code{"\t"}, \code{\link[=import_tsv]{import_tsv()}} is a faster option.}
 }
 \value{
 A data.frame with mz and intensity values
 }
 \description{
-Uses [utils::read.table]
+Uses \link[utils:read.table]{utils::read.table}
 }

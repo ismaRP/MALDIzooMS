@@ -3,12 +3,12 @@
 \name{peaks_local_bg}
 \alias{peaks_local_bg}
 \title{Filter a peak list based on likelihood that peaks are above background local
-noise}
+noise.}
 \usage{
 peaks_local_bg(x, mass_range, bg_cutoff, l_cutoff, int_index = 2L, ...)
 }
 \arguments{
-\item{x}{Peaks matrix}
+\item{x}{Peaks matrix containing unfiltered local maxima.}
 
 \item{mass_range}{Mass window to both sides of a peak to be considered for backgroun modelling}
 
@@ -20,12 +20,14 @@ and \code{bg_cutoff=0.5} would only keep the bottom half.}
 \item{l_cutoff}{Likelihood threshold or p-value. Peaks with a probability of being modelled as
 background noise higher than this are filtered out.}
 
-\item{int_index}{Column where to get intensities from matrix `x`}
+\item{int_index}{Column where to get intensities from matrix \code{x}}
+
+\item{...}{Currently not in use, required by \link[Spectra:Spectra]{Spectra::addProcessing,Spectra-method}.}
 }
 \value{
 Peak matrix
 }
 \description{
-Filter a peak list based on likelihood that peaks are above background local
-noise
+The function models the noise around a given peak using a normal distribution
+and estimates the probability of the peak intensity being greater or equal.
 }

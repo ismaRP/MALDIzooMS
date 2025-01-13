@@ -7,5 +7,5 @@
 rw_chunk_tsv(x, ch, indir, read_f, outpath, in_ext, pb)
 }
 \description{
-Internal use only. Use [change_format_chunks] instead
+Internal use only. Use \link{change_format_chunks} instead
 }

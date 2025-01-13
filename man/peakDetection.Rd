@@ -11,7 +11,7 @@ peakDetection(s, apply_queue = FALSE, ...)
 
 \item{apply_queue}{logical, whether to apply the processing queue}
 
-\item{...}{Arguments passed to [peak_detection] and [apply_preprocess]}
+\item{...}{Arguments passed to \link{peak_detection} and \link{apply_preprocess}}
 }
 \value{
 A Spectra object

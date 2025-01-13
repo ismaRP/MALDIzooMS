@@ -2,7 +2,7 @@
 % Please edit documentation in R/as_maldiquant.R
 \name{asMassPeaksList}
 \alias{asMassPeaksList}
-\title{Transform list of peak matrices into a list of [MALDIquant::MassPeaks]}
+\title{Transform list of peak matrices into a list of \link[MALDIquant:MassPeaks-class]{MALDIquant::MassPeaks}}
 \usage{
 asMassPeaksList(pl)
 }
@@ -10,8 +10,8 @@ asMassPeaksList(pl)
 \item{pl}{List of peak matrices}
 }
 \value{
-List of [MALDIquant::MassPeaks] objects
+List of \link[MALDIquant:MassPeaks-class]{MALDIquant::MassPeaks} objects
 }
 \description{
-Transform list of peak matrices into a list of [MALDIquant::MassPeaks]
+Transform list of peak matrices into a list of \link[MALDIquant:MassPeaks-class]{MALDIquant::MassPeaks}
 }

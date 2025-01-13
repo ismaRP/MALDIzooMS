@@ -10,15 +10,16 @@ apply_preprocess(
   write_data = FALSE,
   file = NULL,
   ncores = NULL,
+  verbose = FALSE,
   BPPARAM = NULL
 )
 }
 \arguments{
 \item{s}{Spectra object}
 
-\item{in_memory}{logical. `in_memory` is `TRUE` keeps the peaks data in memory using
-a [Spectra::MsBackendDataFrame]. If `FALSE`, peaks data are kept on disk
-un a MzML file using the [Spectra::MsBackendMzR]. If `FALSE`, `write_data` is
+\item{in_memory}{logical. \code{in_memory} is \code{TRUE} keeps the peaks data in memory using
+a \link[Spectra:MsBackend]{Spectra::MsBackendDataFrame}. If \code{FALSE}, peaks data are kept on disk
+un a MzML file using the \link[Spectra:MsBackend]{Spectra::MsBackendMzR}. If \code{FALSE}, \code{write_data} is
 overridden and the spectra is written to file.}
 
 \item{write_data}{logical. Whether to write spectra data into a file
@@ -28,24 +29,26 @@ if we want to apply preprocessing and the resulting object is still
 too big to keep in memory, either because there are too many spectra
 or because we still haven't picked peaks.}
 
-\item{file}{If `write_data` is `TRUE`, or `in_memory` is `FALSE`,
+\item{file}{If \code{write_data} is \code{TRUE}, or \code{in_memory} is \code{FALSE},
 required file or files to write spectra.
 IF there is one file, all spectra is saved on the same file.
 If multiple files, there needs to be one per spectra.}
 
 \item{ncores}{Number of cores for parallel processing of the newly created
 Spectra object. It can also be specified using ncores in the metadata
-slot of `s`. If both are specified, the value of the function argument
+slot of \code{s}. If both are specified, the value of the function argument
 takes precedence.
-If both are `NULL`, it is set to the maximum available cores - 2
-with `parallel::detectCores() - 2`. See [parallel::detectCores()]}
+If both are \code{NULL}, it is set to the maximum available cores - 2
+with \code{parallel::detectCores() - 2}. See \code{\link[parallel:detectCores]{parallel::detectCores()}}}
 
-\item{BPPARAM}{bpparam of the newly created Spectra object. Default is
-[BiocParallel::MulticoreParam] with `ncores`.}
+\item{verbose}{Whether to print progress and progress bars.}
+
+\item{BPPARAM}{bpparam for the newly created Spectra object. Default is
+\link[BiocParallel:MulticoreParam-class]{BiocParallel::MulticoreParam} with \code{ncores}.}
 }
 \value{
-A Spectra object with either [Spectra::MsBackendMzR] (`in_memory=FALSE`) or
-[Spectra::MsBackendMemory] (`ìn_memory=TRUE`) backends
+A Spectra object with either \link[Spectra:MsBackend]{Spectra::MsBackendMzR} (\code{in_memory=FALSE}) or
+\link[Spectra:MsBackend]{Spectra::MsBackendMemory} (\code{ìn_memory=TRUE}) backends
 }
 \description{
 Applies processing queue to Spectra

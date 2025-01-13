@@ -7,7 +7,7 @@
 count_peaks(s)
 }
 \arguments{
-\item{s}{}
+\item{s}{\link[Spectra:Spectra]{Spectra::Spectra} object}
 }
 \value{
 A vector of integers with the number of peaks

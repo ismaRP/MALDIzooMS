@@ -7,12 +7,12 @@
 smoothSpectra(s, ...)
 }
 \arguments{
-\item{s}{Spectra object}
+\item{s}{\link[Spectra:Spectra]{Spectra::Spectra} object}
 
-\item{...}{}
+\item{...}{Parameters passed to \link{smooth}}
 }
 \value{
-A Spectra object
+A \link[Spectra:Spectra]{Spectra::Spectra} object
 }
 \description{
 Smooth spectra

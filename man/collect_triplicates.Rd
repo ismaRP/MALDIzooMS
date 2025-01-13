@@ -21,15 +21,15 @@ collect_triplicates(
 \item{platemap}{Data frame mapping plate and coordinate to sample name and replicate.
 It can contain the following columns:
 \itemize{
-  \item folder: main folder of group of plates.
-  \item subfolder: subfolder from a specific plate where spetra is stored.
-  \item basename: prefix of samples in the folder that is preceeded by coordinates.
-  \item sample_name: (preferably) unique sample name.
-  \item spot1, spot2, spot3: (for wide format) coordinates of each of the replicates.
-        There can be more than 3 replicates, but the column name always need
-        to have this format: "spot#"
-  \item spot: (for long format), coordinates of the replicate.
-  \item date (optionl): the date each plate was spotted or analyzed.
+\item folder: main folder of group of plates.
+\item subfolder: subfolder from a specific plate where spetra is stored.
+\item basename: prefix of samples in the folder that is preceeded by coordinates.
+\item sample_name: (preferably) unique sample name.
+\item spot1, spot2, spot3: (for wide format) coordinates of each of the replicates.
+There can be more than 3 replicates, but the column name always need
+to have this format: "spot#"
+\item spot: (for long format), coordinates of the replicate.
+\item date (optionl): the date each plate was spotted or analyzed.
 }}
 
 \item{in_pivot}{Whether the platemap is in "wide" or "long" format.

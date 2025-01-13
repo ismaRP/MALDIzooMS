@@ -2,7 +2,7 @@
 % Please edit documentation in R/preprocess.R
 \name{smooth}
 \alias{smooth}
-\title{Intensity smoothing}
+\title{Intensity smoothing spectrapeak matrix}
 \usage{
 smooth(
   x,
@@ -29,11 +29,11 @@ or \code{'SavitzkyGolay'}}
 \item{in_place}{Whether smoothing is in place, or a new column with the smoothened
 intensity is added}
 
-\item{...}{Parameters passed to other methods. Not in use, required by [Spectra::addProcessing].}
+\item{...}{Parameters passed to other methods. Not in use, required by \link[Spectra:Spectra]{Spectra::addProcessing,Spectra-method}.}
 }
 \value{
 Peak matrix
 }
 \description{
-Intensity smoothing
+Intensity smoothing spectrapeak matrix
 }

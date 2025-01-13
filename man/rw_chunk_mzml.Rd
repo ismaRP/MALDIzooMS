@@ -17,5 +17,5 @@ rw_chunk_mzml(
 )
 }
 \description{
-Internal use only. Use [change_format_chunks] instead
+Internal use only. Use \link{change_format_chunks} instead
 }

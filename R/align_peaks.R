@@ -3,21 +3,34 @@
 
 #' Build internal reference spectrum
 #'
-#' @param mpl MassPeaksList object
-#' @param minFreq
-#' @param method
-#' @param tolerance
-#' @param labels
+#' It comprises a peak binning followed by filtering step, adapted from [MALDIquant::referencePeaks].
+#' This function allows to filter peaks groupwise.
 #'
-#' @return
+#' @param mpl MassPeaksList or Spectra object
+#' @param minFreq Minimum frequency of a peak in the list of spectra to be added
+#'                to the reference.
+#' @param method Method for binning peaks across spectra. 'strict' does not allow
+#'               a bin that contains two peaks from the same spectra and would
+#'               split it further, while 'relaxed' would allow it.
+#' @param tolerance Tolerance deviation value for grouping peaks into the same bin.
+#' @param ppm Tolerance deviation in ppm. `tolerance` is ignored if `ppm` is set.
+#' @param labels Labels for gorupwise peak filtering.
+#' @param ret.object `character`, type of object to return:
+#'        'Spectra', 'MassPeaks', or 'df'
+#'
+#' @return Reference peak list. The type depends on `ret.object`:
+#'         [Spectra::Spectra], [MALDIquant::MassPeaks] or a data frame
 #' @importFrom MALDIquant filterPeaks binPeaks createMassPeaks isMassPeaksList
 #' @export
 #'
-#' @examples
 int_ref_peaks = function(mpl, method=c('strict', 'relaxed'), minFreq=0.9,
-                       tolerance=0.002, labels=NULL, ret.object=c('Spectra','MassPeaks', 'df')){
+                         tolerance=0.002, ppm=NULL, labels=NULL, ret.object=c('Spectra','MassPeaks', 'df')){
   method = match.arg(method)
   ret.object = match.arg(ret.object)
+
+  if (!is.null(ppm)) {
+    tolerance = ppm*1e-6
+  }
 
   if (is(mpl, 'Spectra')) {
     # Apply processing queue
@@ -29,17 +42,17 @@ int_ref_peaks = function(mpl, method=c('strict', 'relaxed'), minFreq=0.9,
   }
 
   if (is.null(labels)){
-    referencePeaks = filterPeaks(
+    ref_peaks = filterPeaks(
       binPeaks(mpl, method=method, tolerance=tolerance),
       minFrequency=minFreq
     )
   } else {
-    referencePeaks = filterPeaks(
+    ref_peaks = filterPeaks(
       binPeaks(mpl, method=method, tolerance=tolerance),
       minFrequency=minFreq, labels=labels
     )
   }
-  m = as.binary.matrix(as.matrix.MassObjectList(referencePeaks))
+  m = get_bin_matrix(intensity_matrix(ref_peaks))
   ## set peak intensity to number of occurrence
   intensity = unname(colMeans(m))
 
@@ -63,42 +76,48 @@ int_ref_peaks = function(mpl, method=c('strict', 'relaxed'), minFreq=0.9,
 
 
 
-#' Parse sequence
+#' Parse protein into peptides using
 #'
-#' @param species
-#' @param chain
-#' @param id
-#' @param sequence
+#' @param species Organism name
+#' @param chain Protein chain name
+#' @param id Protein ID, for example Uniprot ID
+#' @param sequence Protein sequence
 #'
-#' @return
+#' @return Data frame with columns: "seq", "nhyd", "nglut", "mass1", "seqpos",
+#'         "missed.cleaves", "chain", "species" and "id"
 #'
 #' @importFrom bacollite parse.seq
 #' @export
 #'
-#' @examples
 parse_seqs = function(species, chain, id, sequence, gpo_only=F){
   pseq = parse.seq(sequence, max.missed.cleaves = 0, gpo_only=gpo_only)
   pseq$chain = chain
   pseq$species = species
+  pseq$id = id
   pseq
 }
 
 
 #' Build reference Spectrum from external sequences
 #'
-#' @param sequences
-#' @param mc.cores
-#' @param gpo_only
-#' @param ret.object
-#' @param non_deam
+#' @param sequences Dataframe with collumns: species, chain, id, sequence
+#' @param mc.cores Numbre of CPUs for parallel processing
+#' @param gpo_only Logical. If `TRUE`, only the second proline in GPP patterns can be
+#'        hydroxilated, becoming GPO. If `FALSE`, both can be hyroxylated.
+#' @param ret.object Type of object to return. It can be:
+#'  * 'df': for a data frame,
+#'  * 'MassPeaks': for a [MALDIquant::MassPeaks] object
+#'  * 'Spectra': for a [Spectra::Spectra] object
+#' @param non_deam logical, whether to include deamidated peptides for those
+#'        with N or Q aminoacids
 #'
-#' @return
+#' @return Reference peak list. The type depends on `ret.object`:
+#'         [Spectra::Spectra], [MALDIquant::MassPeaks] or a data frame
 #' @importFrom dplyr bind_rows select
 #' @importFrom parallel mcmapply
 #' @importFrom tibble as_tibble
 #' @export
 #'
-#' @examples
 ext_ref_peaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 'MassPeaks', 'Spectra'),
                          non_deam = FALSE) {
 
@@ -138,12 +157,15 @@ ext_ref_peaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 
 
 #' Align Peaks in Spectra
 #'
-#' This function aligns peaks across spectra using a specified tolerance and optionally a reference peak list.
+#' This function aligns peaks across spectra using a specified tolerance using a reference peak list.
+#' See [MALDIrppa::alignPeaks].
 #'
 #' @param s A `Spectra` object containing the spectral data to be aligned.
 #' @param tolerance A numeric value specifying the m/z tolerance for peak matching.
+#'        If `reference` is `NULL`, the same tolerance is used to build an internal reference.
+#' @param ppm Tolerance deviation in ppm. `tolerance` is ignored if `ppm` is set.
 #' @param minFreq A numeric value between 0 and 1 representing the minimum frequency of a peak across spectra for it to be considered a reference peak. Defaults to 0.9 if `reference` is `NULL`.
-#' @param reference An optional `MassPeaks` object to be used as the reference for alignment. If `NULL`, a reference is created based on `minFreq`.
+#' @param reference An optional [MALDIquant::MassPeaks] object to be used as the reference for alignment. If `NULL`, a reference is created based on `minFreq`.
 #' @param labels Optional labels for the reference peaks.
 #' @param return_ref Logical. If `TRUE`, the function returns a list with the aligned spectra and the reference peaks. Defaults to `FALSE`.
 #' @param return_warp Whether warping functions are returned, added as a Spectra varaible
@@ -163,17 +185,19 @@ ext_ref_peaks = function(sequences, mc.cores=4L, gpo_only=F, ret.object=c('df', 
 #' @importFrom Spectra MsBackendDataFrame peaksData
 #' @export
 #'
-align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL,
+align_peaks = function(s, tolerance=0.002, ppm=NULL, minFreq=NULL, reference=NULL, labels=NULL,
                        return_ref=FALSE, return_warp=FALSE,...){
   args_methods = list(...)
 
+  if (!is.null(ppm)) {
+    tolerance = ppm*1e-6
+  }
   if (is.null(args_methods$allowNoMatches)) args_methods$allowNoMatches = F
   if (is.null(args_methods$emptyNoMatches)) args_methods$emptyNoMatches = F
   # Apply processing queue
   peaks = peaksData(s)
   # Transform into MALDIquant MassPeaksList
   mpl = asMassPeaksList(peaks)
-
   if (is.null(reference)){
     if (is.null(minFreq)) minFreq=0.9
     reference = int_ref_peaks(
@@ -219,22 +243,35 @@ align_peaks = function(s, tolerance, minFreq=NULL, reference=NULL, labels=NULL,
 
 #' Bin peaks across spectra
 #'
-#' @param s
-#' @param ethod
-#' @param tolerance
+#' Wrapper on [MALDIquant::binPeaks] to work on [Spectra::Spectra] objects.
 #'
-#' @return
+#' @param s Spectra object
+#' @param tolerance Tolerance deviation value for grouping peaks into the same bin.
+#' @param ppm Tolerance deviation in ppm. `tolerance` is ignored if `ppm` is set.
+#' @param ... Paramteres for [MALDIquant::binPeaks], currently:
+#'  - `method` Method for binning: \itemize{
+#'  \item 'strict': A bin cannot contain peaks from the same spectra. In which case,
+#'              it is further split.
+#'  \item 'relaxed': This method allows multiple peaks from the same spectea in the same bin.
+#'  \item 'reference': The spectra are binned around the peaks of the first spectra in 's'
+#'}
+#'
+#' @return [Spectra::Spectra] object
 #' @export
 #' @importFrom MALDIquant mass intensity
 #'
-#' @examples
-bin_peaks = function(s, method=c("strict", "relaxed", "reference"), tolerance=0.002) {
+bin_peaks = function(s, method=c("strict", "relaxed", "reference"),
+                     tolerance=0.002, ppm=NULL) {
+  if (!is.null(ppm)) {
+    tolerance = ppm*1e-6
+  }
+
   # Apply processing queue
   peaks = peaksData(s)
   # Transform into MALDIquant MassPeaksList
   mpl = asMassPeaksList(peaks)
 
-  mpl = binPeaks(mpl, method, tolerance)
+  mpl = binPeaks(mpl, tolerance, ...)
 
   spd = spectraData(s)
   spd$mz = lapply(mpl, MALDIquant::mass)
@@ -255,23 +292,29 @@ bin_peaks = function(s, method=c("strict", "relaxed", "reference"), tolerance=0.
 #' Find monoisotopic peaks
 #' It is a wrapper on [MALDIquant::monoisotopicPeaks] to work with Spectra objects
 #' @param s Spectra object
-#' @param ppm tolerance in parts per million
-#' @param ...
-#' \itemize{
-#'    \item minCor
-#'    \item distance
-#'    \item size
-#' }
-#' @return
+#' @param tolerance tolerance between observed peaks and the expected pseudo cluster
+#'        using `distance` between peaks.
+#' @param ppm tolerance in parts per million. If use, `tolerance` is ignored.
+#' @param ... Arguments passed to [MALDIquant::monoisotopicPeaks]
+#'    - 'minCor': `double`, minimum correlation between the experimental pseudo isotopic pattern
+#'       and the theoretical one generated by the Poisson model.
+#'    - 'distance': mass distance between the peaks in the pattern. Default is 1.00235
+#'    - 'size': sizes of isotopic patterns to look for. Using the default,
+#'      `3L:10L`, it will look for patterns of size 10 prefferably and decrease it down
+#'      to 3.
+#'
+#' @return [Spectra::Spectra] object with picked monoisotopic peaks
 #' @export
 #' @importFrom MALDIquant monoisotopicPeaks mass intensity
-#' @examples
-monoisotopic_peaks = function(s, ppm, ...) {
+monoisotopic_peaks = function(s, tolerance, ppm, ...) {
+  if (!is.null(ppm)){
+    tolerance = ppm * 1e-6
+  }
   # Apply processing queue
   peaks = peaksData(s)
   # Transform into MALDIquant MassPeaksList
   mpl = asMassPeaksList(peaks)
-  mpl = monoisotopicPeaks(mpl, tolerance=ppm*1e-6, ...)
+  mpl = monoisotopicPeaks(mpl, tolerance=tolerance, ...)
 
   spd = spectraData(s)
   spd$mz = lapply(mpl, MALDIquant::mass)
@@ -291,25 +334,31 @@ monoisotopic_peaks = function(s, ppm, ...) {
 }
 
 
-#' Filter peaks
+#' Filter peaks based on their frequency in the set of spectra
 #'
-#' @param s
-#' @param minFrequency
-#' @param minNumber
-#' @param labels
-#' @param mergeWhitelists
+#' It uses [MALDIquant::filterPeaks]
+#' @param s [Spectra::Spectra] object
+#' @param ... Parameters passed to [MALDIquant::filterPeaks]
+#'    - minFrequency Minimum frequency (0 to 1) threshold for a peak to be kept
+#'    - minNumber Absolute frquency, similar to `minFrequency`, but with
+#'      absolute number of spectra
+#'    - labels `factor` for groupwise filtering. `minFrequency` and `minNumber`
+#'      are considered within each group.
+#'    - mergeWhitelists `logical`, such that when `TRUE` and applying groupwise
+#'      filtering with `labels`, peaks that pass the filter in one group, are also kept
+#'      or whitelisted in other groups, even if their frequencies are below
+#'      `minFrequency` or `minNumber`.
 #'
-#' @return
+#' @return [Spectra::Spectra] object after peak filtering
 #' @export
 #'
-#' @examples
-filter_peaks = function(s, minFrequency, minNumber, labels, mergeWhitelists=FALSE) {
+filter_peaks = function(s, ...) {
   # Apply processing queue
   peaks = peaksData(s)
   # Transform into MALDIquant MassPeaksList
   mpl = asMassPeaksList(peaks)
 
-  mpl = filterPeaks(mpl,  minFrequency, minNumber, labels, mergeWhitelists=mergeWhitelists)
+  mpl = filterPeaks(mpl, ...)
 
   spd = spectraData(s)
   spd$mz = lapply(mpl, MALDIquant::mass)
@@ -329,12 +378,11 @@ filter_peaks = function(s, minFrequency, minNumber, labels, mergeWhitelists=FALS
 
 #' Count peaks in each spectra
 #'
-#' @param s
+#' @param s [Spectra::Spectra] object
 #'
 #' @return A vector of integers with the number of peaks
 #' @export
 #'
-#' @examples
 count_peaks = function(s) {
   peaks = peaksData(s)
   return(sapply(peaks, nrow))
@@ -345,24 +393,33 @@ count_peaks = function(s) {
 #' Turns the list of peaks into an intensity matrix with samples/spectra as rows
 #' and mz values as columns.
 #'
-#' @param s Spectra object
-#' @param specvar_to_names
+#' @param s Spectra or MassPeaks object
+#' @param specvar_to_names Spectra variable to use as rownames of the
+#'        intensity matrix
 #'
-#' @return
+#' @return `matrix` with samples as rows and masses as columns, filled with
+#'         intensity values
 #' @export
 #' @importFrom MALDIquant intensityMatrix
 #'
-#' @examples
-intensity_matrix = function(s, specvar_to_names) {
+intensity_matrix = function(s, specvar_to_names=NULL) {
   # Apply processing queue
-  peaks = peaksData(s)
-  names(peaks) = s[[specvar_to_names]]
-  # Transform into MALDIquant MassPeaksList
-  mpl = asMassPeaksList(peaks)
-  m = intensityMatrix(mpl)
+  if (class(s) == 'Spectra') {
+    peaks = peaksData(s)
+    # Transform into MALDIquant MassPeaksList
+    mpl = asMassPeaksList(peaks)
+    m = intensityMatrix(mpl)
+  } else if (isMassPeaksList(s)) {
+    m = intensityMatrix(s)
+  } else {
+    stop('s needs to be a Spectra or a list of MassPeaks objects.')
+  }
   # rownames(m) = s[[specvar_to_names]]
   attr(m, 'mass') = round(attr(m, 'mass'), 2)
   colnames(m) = attr(m, 'mass')
+  if (!is.null(specvar_to_names)) {
+    rownames(m) = s[[specvar_to_names]]
+  }
   return(m)
 }
 
@@ -372,10 +429,9 @@ intensity_matrix = function(s, specvar_to_names) {
 #'
 #' @param m intensity matrix
 #'
-#' @return
+#' @return Binary, 0-1 `matrix`
 #' @export
 #'
-#' @examples
 get_bin_matrix = function(m) {
   stopifnot(is.matrix(m))
   wn = is.na(m)

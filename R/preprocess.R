@@ -1,4 +1,19 @@
 
+
+#' Print message only if verbose
+#'
+#' @param msg Message to print
+#' @param verbose logical, whether to print the message or not
+#'
+#' @export
+#'
+#' @examples
+#' verbose = TRUE
+#' print_progress('', verbose)
+print_progress = function(msg, verbose) {
+  if (verbose) message(msg)
+}
+
 #' Plot Spectra in different preprocessing stages
 #'
 #' @param l List of Spectra objects. Each Spectra is at a different state in the
@@ -7,12 +22,13 @@
 #' @param scale_factor Vector of scale factors used to normalize peak with respect
 #' to the rest of the spectra.
 #' @param mzrange mz range to limit plot
+#' @param prep_labels (optional) character vector with labels for each preprocessing
+#'                    step to be plotted
+#' @param n_col Number of columns in the plot
 #'
-#' @return
 #' @export
 #' @importFrom Spectra concatenateSpectra
 #'
-#' @examples
 plot_preprocess = function(l, p=NULL, scale_factor=1, mzrange=c(800, 4000),
                            prep_labels=c('Raw', 'Smoothed', 'Baseline corrected', 'Peaks'),
                            n_col=2) {
@@ -60,8 +76,9 @@ plot_preprocess = function(l, p=NULL, scale_factor=1, mzrange=c(800, 4000),
 #' Quality control spectra from [MALDIrppa::screenSpectra()]
 #' Works on peak matrix rather than on [MALDIquant::MassSpectrum]
 #' @param x Raw peak matrix with mz and intensities
+#' @param ... Currently not in use, required by [Spectra::addProcessing,Spectra-method].
 #'
-#' @return numeric, Atipicality score
+#' @return `numeric`, Atipicality score
 #' @export
 #' @importFrom signal sgolayfilt
 #' @importFrom robustbase Qn
@@ -83,25 +100,52 @@ atipicality_spectra = function(x, ...){
 #' Identification of potentially low-quality raw mass spectra
 #'
 #' Uses [atipicality_spectra], which implements [MALDIrppa::screenSpectra()] on
-#' peak matrix
-#' @param object [Spectra::Spectra()] object
+#' peak matrix. It can calculate calculate lower and upper A limits by label.
 #'
-#' @return A [Spectra::Spectra()] object with \code{QCflag} spectrum variable added
+#' @param s Spectra object
+#' @param BPPARAM Parallel computing configuration from [BiocParallel]. Default is
+#'        is [BiocParallel::bpparam()]
+#' @param labels factor to do groupwise calculation of A-score limits for flagging
+#'        spectra.
+#'
+#' @return A list with [Spectra::Spectra()] object with \code{QCflag} spectrum
+#'         variable added and the atipicality limits for flagging.
 #' @export
 #' @importFrom Spectra addProcessing
-atipicalitySpectra = function(s){
+atipicalitySpectra = function(s, labels=NULL, BPPARAM = bpparam()){
   qcA = addProcessing(s, atipicality_spectra)
-  qcA = unlist(peaksData(qcA))
+  qcA = unlist(peaksData(qcA, BPPARAM=BPPARAM))
 
   s$Atipicality = qcA
-  l = qc_limits(s$Atipicality)
 
-  s$QCflag = 'QC_pass'
-  s$QCflag[s$Atipicality > l[1] | s$Atipicality < l[2]] = 'QC_fail'
+  if (!is.null(labels)) {
+    QCmin = vector('numeric', length(s))
+    QCmax = vector('numeric', length(s))
+    if (!is.factor(labels)) labels = factor(labels)
+    for (l in levels(labels)) {
+      idx = which(labels == l)
+      qcl = qc_limits(s$Atipicality[idx])
+      QCmin[idx] = qcl[1]
+      QCmax[idx] = qcl[2]
+    }
+  } else {
+    QClimits = qc_limits(s$Atipicality)
+    QCmin = QClimits[1]
+    QCmax = QClimits[2]
+  }
 
+  s$QCflag = 'QCpass'
+  qcpass = sapply(
+    seq_along(s$Atipicality),
+    function(i) {
+      (QCmin[i] < s$Atipicality[i] & s$Atipicality[i] < QCmax[i])
+    })
+  s$QCflag[!qcpass] = 'QCfail'
+  s$QCmin = QCmin
+  s$QCmax = QCmax
   s = reset(s)
 
-  return(list(s=s, l=l))
+  return(s)
 }
 
 
@@ -118,7 +162,7 @@ atipicalitySpectra = function(s){
 #'
 qc_limits = function(A) {
   threshold = 1.5
-  QClimits = adjboxStats(A, coef = threshold)$fence[c(2,1)]
+  QClimits = adjboxStats(A, coef = threshold)$fence
   return(QClimits)
 }
 
@@ -146,34 +190,40 @@ qc_limits = function(A) {
 #'        takes precedence.
 #'        If both are `NULL`, it is set to the maximum available cores - 2
 #'        with `parallel::detectCores() - 2`. See [parallel::detectCores()]
-#' @param BPPARAM bpparam of the newly created Spectra object. Default is
+#' @param verbose Whether to print progress and progress bars.
+#' @param BPPARAM bpparam for the newly created Spectra object. Default is
 #'        [BiocParallel::MulticoreParam] with `ncores`.
 #'
 #' @return A Spectra object with either [Spectra::MsBackendMzR] (`in_memory=FALSE`) or
-#' [Spectra::MsBackendMemory] (`ìn_memory=TRUE`) backends
+#'         [Spectra::MsBackendMemory] (`ìn_memory=TRUE`) backends
 #' @importFrom Spectra export Spectra MsBackendMzR MsBackendDataFrame
-#' @importFrom BiocParallel MulticoreParam multicoreWorkers
+#' @importFrom BiocParallel MulticoreParam multicoreWorkers SerialParam SnowParam
 #' @export
 #'
-#' @examples
 apply_preprocess = function(
     s, in_memory=TRUE,
     write_data=FALSE,
     file=NULL,
     ncores=NULL,
+    verbose=FALSE,
     BPPARAM=NULL) {
 
   if (is.null(BPPARAM)) {
-    if (is.null(s@metadata$ncores) & is.null(ncores)) {
+    if (is.null(ncores)) {
       ncores = multicoreWorkers()
-    } else if (!is.null(s@metadata$ncores) & is.null(ncores)){
-      ncores = s@metadata$ncores
     }
-    BPPARAM = MulticoreParam(workers=ncores)
+    if (ncores == 1) {
+      BPPARAM = SerialParam(progressbar = verbose)
+    } else if (.Platform$OS.type == "windows") {
+      BPPARAM = SnowParam(workers=ncores, progressbar = verbose)
+    } else {
+      BPPARAM = MulticoreParam(workers=ncores, progressbar = verbose)
+    }
   }
   pcs = processingChunkSize(s)
   if (in_memory) { # Apply processing and keep in memory
-    peaks = peaksData(s, columns=peaksVariables(s))
+    print_progress('Running processing queue...', verbose)
+    peaks = peaksData(s, columns=peaksVariables(s), BPPARAM=BPPARAM)
     # peaks = peaksData(s)
     spd = spectraData(s)
     peaks_vars = colnames(peaks[[1]])
@@ -188,8 +238,9 @@ apply_preprocess = function(
     processingChunkSize(s) = pcs
 
     if (write_data) {
+      print_progress('Exporting mzml files...', verbose=verbose)
       export(object=s, backend=MsBackendMzR(), format='mzML',
-             file=file)
+             file=file, BPPARAM=BPPARAM)
     }
   } else { # Keep data on disk and write to file
     if (write_data == FALSE) {
@@ -201,8 +252,10 @@ apply_preprocess = function(
         'to be provided'))
     }
     # Exporting runs the processing queue
+    print_progress('Running processing queue and exportin mzml files...',
+                   verbose=verbose)
     export(object=s, backend=MsBackendMzR(), format='mzML',
-           file=file)
+           file=file, BPPARAM=BPPARAM)
     # Reload the file into a MsBackendMzR
     s = suppressMessages(
       Spectra(file, source = MsBackendMzR(), centroided = FALSE,
@@ -215,18 +268,18 @@ apply_preprocess = function(
 
 
 #' Concatenation of Spectra
+#'
 #' Prior concatenation, it applies the processing queue and changes to a
 #' MsBackendDataFrame
 #'
-#' @param x List of Spectra objects
+#' @param x List of [Spectra::Spectra] object
+#' @param ... Parameters for [apply_preprocess]
 #'
-#' @return
+#' @return A single [Spectra::Spectra] object
 #' @export
 #'
-#' @examples
 concatenate_spectra = function(x, ...) {
-  x = unlist(unname(list(unname(x), ...)))
-  x = sapply(x, apply_preprocess, write_data = FALSE, USE.NAMES = FALSE)
+  x = sapply(x, apply_preprocess, ...)
   x = concatenateSpectra(x)
   return(x)
 }
@@ -237,14 +290,14 @@ concatenate_spectra = function(x, ...) {
 
 #' Baseline correction subtraction
 #'
-#' @param x Peak matrix
+#' @param x Peaks matrix
 #' @param int_index Index of the intensity to calculate the baseline
 #' @param keep_bl Keep basseline in a separate column
 #' @param substract_index Index of the intensity column to be substracted.
-#' If NULL, there is no substraction
+#'        If NULL, there is no substraction
 #' @param in_place Replace the intensity in \code{substract_index} with the baseline
-#' substracted intensity
-#' @param ... Arguments passed to [MsCoreUtils::estimateBaseline()]. Currently \code{'method'}.
+#'        substracted intensity
+#' @param ... Arguments passed to [MsCoreUtils::estimateBaseline()]. Currently `method`.
 #'
 #' @return Peak matrix. Depending on the arguments, with the baseline-substracted
 #' intensities either in the same or in a new column and with or without the
@@ -291,21 +344,19 @@ baseline_correction = function(x, int_index=2, keep_bl=TRUE,
 #' Apply baseline correction to Spectra object
 #'
 #' @param s Spectra object
-#' @param ...
+#' @param ... Arguments passed to [baseline_correction]
 #'
 #' @return Spectra object
 #' @export
 #'
-#' @examples
 baselineCorrection = function(s, ...) {
   s = addProcessing(
-    s, MALDIzooMS::baseline_correction, ...)
-
+    s, baseline_correction, ...)
   return(s)
 }
 
 
-#' Intensity smoothing
+#' Intensity smoothing spectrapeak matrix
 #'
 #' @param x Peak matrix
 #' @param method Smoothing method. One of \code{'MovingAverage'}, \code{'WeightedMovingAverage'}
@@ -315,7 +366,7 @@ baselineCorrection = function(s, ...) {
 #' @param int_index Column with the intensity to smooth
 #' @param in_place Whether smoothing is in place, or a new column with the smoothened
 #'                 intensity is added
-#' @param ... Parameters passed to other methods. Not in use, required by [Spectra::addProcessing].
+#' @param ... Parameters passed to other methods. Not in use, required by [Spectra::addProcessing,Spectra-method].
 #'
 #' @return Peak matrix
 #' @export
@@ -351,13 +402,12 @@ smooth = function(x,
 
 #' Smooth spectra
 #'
-#' @param s Spectra object
-#' @param ...
+#' @param s [Spectra::Spectra] object
+#' @param ... Parameters passed to [smooth]
 #'
-#' @return A Spectra object
+#' @return A [Spectra::Spectra] object
 #' @export
 #'
-#' @examples
 smoothSpectra = function(s, ...) {
   s = addProcessing(
     s, MALDIzooMS::smooth, ...)
@@ -368,16 +418,16 @@ smoothSpectra = function(s, ...) {
 
 
 
-#' Normalize peak matrix
+#' Normalize peaks matrix
 #'
-#' @param x Peak matrix
+#' @param x Peaks matrix
 #' @param func Function to be applied to the intensities
 #' @param scaleFactor Scaling factor
+#' @param ... Currently not in use, required by [Spectra::addProcessing,Spectra-method].
 #'
-#' @return
+#' @return Peaks matrix
 #' @export
 #'
-#' @examples
 normalize_spectra = function(x, scaleFactor=1, func=NULL, ...) {
   if (is.null(func)) {
     x[,2] = x[,2] / scaleFactor
@@ -391,14 +441,13 @@ normalize_spectra = function(x, scaleFactor=1, func=NULL, ...) {
 
 #' Normalize spectra object
 #'
-#' @param s Spectra object
+#' @param s [Spectra::Spectra] object
 #' @param scale_f spectra variable to use as normalization factor or a function
 #' to be applied to spectra intensities
 #'
-#' @return
+#' @return [Spectra::Spectra] object
 #' @export
 #'
-#' @examples
 normalizeSpectra = function(s, scale_f) {
   if (is.function(scale_f)) {
     s = addProcessing(s, normalize_spectra, func=scale_f)

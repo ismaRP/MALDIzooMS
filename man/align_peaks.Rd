@@ -6,7 +6,8 @@
 \usage{
 align_peaks(
   s,
-  tolerance,
+  tolerance = 0.002,
+  ppm = NULL,
   minFreq = NULL,
   reference = NULL,
   labels = NULL,
@@ -16,32 +17,38 @@ align_peaks(
 )
 }
 \arguments{
-\item{s}{A `Spectra` object containing the spectral data to be aligned.}
+\item{s}{A \code{Spectra} object containing the spectral data to be aligned.}
 
-\item{tolerance}{A numeric value specifying the m/z tolerance for peak matching.}
+\item{tolerance}{A numeric value specifying the m/z tolerance for peak matching.
+If \code{reference} is \code{NULL}, the same tolerance is used to build an internal reference.}
 
-\item{minFreq}{A numeric value between 0 and 1 representing the minimum frequency of a peak across spectra for it to be considered a reference peak. Defaults to 0.9 if `reference` is `NULL`.}
+\item{ppm}{Tolerance deviation in ppm. \code{tolerance} is ignored if \code{ppm} is set.}
 
-\item{reference}{An optional `MassPeaks` object to be used as the reference for alignment. If `NULL`, a reference is created based on `minFreq`.}
+\item{minFreq}{A numeric value between 0 and 1 representing the minimum frequency of a peak across spectra for it to be considered a reference peak. Defaults to 0.9 if \code{reference} is \code{NULL}.}
+
+\item{reference}{An optional \link[MALDIquant:MassPeaks-class]{MALDIquant::MassPeaks} object to be used as the reference for alignment. If \code{NULL}, a reference is created based on \code{minFreq}.}
 
 \item{labels}{Optional labels for the reference peaks.}
 
-\item{return_ref}{Logical. If `TRUE`, the function returns a list with the aligned spectra and the reference peaks. Defaults to `FALSE`.}
+\item{return_ref}{Logical. If \code{TRUE}, the function returns a list with the aligned spectra and the reference peaks. Defaults to \code{FALSE}.}
 
 \item{return_warp}{Whether warping functions are returned, added as a Spectra varaible}
 
 \item{...}{Additional arguments to control alignment behavior. Supported arguments:
-- `allowNoMatches`: Logical, if `TRUE`, allows no matches in warping functions.
-- `emptyNoMatches`: Logical, if `TRUE`, inserts empty values for unmatched peaks in the output.}
+\itemize{
+\item \code{allowNoMatches}: Logical, if \code{TRUE}, allows no matches in warping functions.
+\item \code{emptyNoMatches}: Logical, if \code{TRUE}, inserts empty values for unmatched peaks in the output.
+}}
 }
 \value{
-If `return_ref = FALSE`, returns an aligned `Spectra` object. If `return_ref = TRUE`, returns a list containing the aligned `Spectra` object and the reference peaks.
+If \code{return_ref = FALSE}, returns an aligned \code{Spectra} object. If \code{return_ref = TRUE}, returns a list containing the aligned \code{Spectra} object and the reference peaks.
 }
 \description{
-This function aligns peaks across spectra using a specified tolerance and optionally a reference peak list.
+This function aligns peaks across spectra using a specified tolerance using a reference peak list.
+See \link[MALDIrppa:alignPeaks]{MALDIrppa::alignPeaks}.
 }
 \details{
-The function first processes the peaks in `s`, and if no reference is provided, it generates one based on `minFreq`. The function applies warping functions determined by the `determineWarpingFunctions` function and then aligns the spectra.
+The function first processes the peaks in \code{s}, and if no reference is provided, it generates one based on \code{minFreq}. The function applies warping functions determined by the \code{determineWarpingFunctions} function and then aligns the spectra.
 }
 \examples{
 # Example usage:

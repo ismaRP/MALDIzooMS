@@ -27,10 +27,10 @@ filenames and/or spectrumId in a mzML file.}
 \item{outpath}{Destination path}
 
 \item{readf}{Input format reading function. One of \code{'fread'}, \code{'table'}
-or \code{'mzML'}. \code{'fread'} uses [data.table::fread()],
-\code{'table'} uses [utils::read.table()] and \code{mzML} uses [mzR::openMSfile()].}
+or \code{'mzML'}. \code{'fread'} uses \code{\link[data.table:fread]{data.table::fread()}},
+\code{'table'} uses \code{\link[utils:read.table]{utils::read.table()}} and \code{mzML} uses \code{\link[mzR:openMSfile]{mzR::openMSfile()}}.}
 
-\item{indir}{Path to data folder. If `NULL`, it assumes `spectra_in` contains whole
+\item{indir}{Path to data folder. If \code{NULL}, it assumes \code{spectra_in} contains whole
 paths to files.}
 
 \item{in_ext}{Extension of input files}

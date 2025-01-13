@@ -11,7 +11,7 @@ filter_snr(x, snr, ...)
 
 \item{snr}{signal-to-noise threshold}
 
-\item{...}{}
+\item{...}{Currently not in use, required by \link[Spectra:Spectra]{Spectra::addProcessing,Spectra-method}.}
 }
 \value{
 peaks matrix

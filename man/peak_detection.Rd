@@ -28,13 +28,13 @@ or \code{"MAD"}}
 
 \item{snr}{Signal-to-noise ratio threshold above which a peak is picked}
 
-\item{k}{Parameter for [MsCoreUtils::refineCentroids]. Values to the left and right
+\item{k}{Parameter for \link[MsCoreUtils:refineCentroids]{MsCoreUtils::refineCentroids}. Values to the left and right
 of a peak to be considered to refine the peak mz position}
 
-\item{descending}{Parameter for [MsCoreUtils::refineCentroids]. Only values between
+\item{descending}{Parameter for \link[MsCoreUtils:refineCentroids]{MsCoreUtils::refineCentroids}. Only values between
 nearest valleys are used.}
 
-\item{threshold}{Parameter for [MsCoreUtils::refineCentroids], a proportion.
+\item{threshold}{Parameter for \link[MsCoreUtils:refineCentroids]{MsCoreUtils::refineCentroids}, a proportion.
 Only values above this fraction of the maxima are used.}
 
 \item{int_index}{Index of the intensity in the peak matrix to be used for peak
@@ -42,12 +42,12 @@ detection.}
 
 \item{add_snr}{logical, whether to add a column with each peak's SNR}
 
-\item{...}{Currently not in use, required by [Spectra::addProcessing].}
+\item{...}{Currently not in use, required by \link[Spectra:Spectra]{Spectra::addProcessing,Spectra-method}.}
 }
 \value{
 Peak matrix, only containing peaks that fullfill all criteria.
 }
 \description{
-It implements [Spectra::pickPeaks()], but allows using intensities in a given
+It implements \code{\link[Spectra:hidden_aliases]{Spectra::pickPeaks()}}, but allows using intensities in a given
 column in the peak matrix
 }

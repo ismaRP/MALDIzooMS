@@ -2,7 +2,7 @@
 % Please edit documentation in R/format_spectra.R
 \name{initialize_mzml_header}
 \alias{initialize_mzml_header}
-\title{Returns mzML header data for [mzR]}
+\title{Returns mzML header data for \link{mzR}}
 \usage{
 initialize_mzml_header()
 }
@@ -10,5 +10,5 @@ initialize_mzml_header()
 A one row data.frame
 }
 \description{
-Returns mzML header data for [mzR]
+Returns mzML header data for \link{mzR}
 }

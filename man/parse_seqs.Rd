@@ -2,13 +2,23 @@
 % Please edit documentation in R/align_peaks.R
 \name{parse_seqs}
 \alias{parse_seqs}
-\title{Parse sequence}
+\title{Parse protein into peptides using}
 \usage{
 parse_seqs(species, chain, id, sequence, gpo_only = F)
 }
 \arguments{
-\item{sequence}{}
+\item{species}{Organism name}
+
+\item{chain}{Protein chain name}
+
+\item{id}{Protein ID, for example Uniprot ID}
+
+\item{sequence}{Protein sequence}
+}
+\value{
+Data frame with columns: "seq", "nhyd", "nglut", "mass1", "seqpos",
+"missed.cleaves", "chain", "species" and "id"
 }
 \description{
-Parse sequence
+Parse protein into peptides using
 }

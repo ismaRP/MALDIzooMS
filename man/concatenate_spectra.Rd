@@ -2,17 +2,19 @@
 % Please edit documentation in R/preprocess.R
 \name{concatenate_spectra}
 \alias{concatenate_spectra}
-\title{Concatenation of Spectra
-Prior concatenation, it applies the processing queue and changes to a
-MsBackendDataFrame}
+\title{Concatenation of Spectra}
 \usage{
 concatenate_spectra(x, ...)
 }
 \arguments{
-\item{x}{List of Spectra objects}
+\item{x}{List of \link[Spectra:Spectra]{Spectra::Spectra} object}
+
+\item{...}{Parameters for \link{apply_preprocess}}
+}
+\value{
+A single \link[Spectra:Spectra]{Spectra::Spectra} object
 }
 \description{
-Concatenation of Spectra
 Prior concatenation, it applies the processing queue and changes to a
 MsBackendDataFrame
 }

@@ -271,7 +271,7 @@ bin_peaks = function(s, method=c("strict", "relaxed", "reference"),
   # Transform into MALDIquant MassPeaksList
   mpl = asMassPeaksList(peaks)
 
-  mpl = binPeaks(mpl, tolerance, ...)
+  mpl = binPeaks(mpl, tolerance, method=method)
 
   spd = spectraData(s)
   spd$mz = lapply(mpl, MALDIquant::mass)

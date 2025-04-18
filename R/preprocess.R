@@ -112,8 +112,12 @@ atipicality_spectra = function(x, ...){
 #'         variable added and the atipicality limits for flagging.
 #' @export
 #' @importFrom Spectra addProcessing
+#' @importFrom BiocParallel register bpparam
 atipicalitySpectra = function(s, labels=NULL, BPPARAM = bpparam()){
   qcA = addProcessing(s, atipicality_spectra)
+
+  register(BPPARAM)
+
   qcA = unlist(peaksData(qcA, BPPARAM=BPPARAM))
 
   s$Atipicality = qcA
@@ -135,14 +139,15 @@ atipicalitySpectra = function(s, labels=NULL, BPPARAM = bpparam()){
   }
 
   s$QCflag = 'QCpass'
+  s$QCmin = QCmin
+  s$QCmax = QCmax
   qcpass = sapply(
     seq_along(s$Atipicality),
     function(i) {
-      (QCmin[i] < s$Atipicality[i] & s$Atipicality[i] < QCmax[i])
+      (s$QCmin[i] < s$Atipicality[i] & s$Atipicality[i] < s$QCmax[i])
     })
   s$QCflag[!qcpass] = 'QCfail'
-  s$QCmin = QCmin
-  s$QCmax = QCmax
+
   s = reset(s)
 
   return(s)
@@ -198,6 +203,7 @@ qc_limits = function(A) {
 #'         [Spectra::MsBackendMemory] (`ìn_memory=TRUE`) backends
 #' @importFrom Spectra export Spectra MsBackendMzR MsBackendDataFrame
 #' @importFrom BiocParallel MulticoreParam multicoreWorkers SerialParam SnowParam
+#' @importFrom BiocParallel register
 #' @export
 #'
 apply_preprocess = function(
@@ -220,6 +226,7 @@ apply_preprocess = function(
       BPPARAM = MulticoreParam(workers=ncores, progressbar = verbose)
     }
   }
+  register(BPPARAM)
   pcs = processingChunkSize(s)
   if (in_memory) { # Apply processing and keep in memory
     print_progress('Running processing queue...', verbose)

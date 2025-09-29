@@ -68,7 +68,7 @@ initialize_mzml_header = function() {
 #' @return NULL
 #' @importFrom mzR openMSfile
 #' @importFrom BiocParallel MulticoreParam SnowParam SerialParam bpmapply bplapply bpoptions
-#' @importFrom fs is_file is_dir path_file path_dir file_exists path
+#' @importFrom fs is_file is_dir path_file path_dir file_exists dir_exists path
 #' @export
 #'
 change_format_chunks = function(spectra_in, spectra_out=NULL, outpath=NULL, readf=NULL,
@@ -150,7 +150,7 @@ change_format_chunks = function(spectra_in, spectra_out=NULL, outpath=NULL, read
         in_ext = auto_in_ext
       }
       in_names = path_file(spectra_in)
-      in_files = path(indir, paste0(spectra_in, '.', in_ext))
+      in_files = path(indir, paste0(spectra_in, in_ext))
     }
   } else if (length(spectra_in) == 1 & file_exists(spectra_in)) {
     # We assume a single spectra file is given
@@ -255,7 +255,7 @@ change_format_chunks = function(spectra_in, spectra_out=NULL, outpath=NULL, read
   }
 
   if (ncores == 1) {
-    BPPARAM = SerialParam(progressbar=FALSE)
+    BPPARAM = SerialParam(progressbar=verbose)
   } else if (.Platform$OS.type == "windows") {
     BPPARAM = SnowParam(workers=ncores, progressbar=FALSE)
   } else {
@@ -269,7 +269,20 @@ change_format_chunks = function(spectra_in, spectra_out=NULL, outpath=NULL, read
   else {
     spectra_chunks = list(seq_along(in_names))
   }
-
+  if (verbose) {
+    message(
+      cat(
+        'Spectra input',
+        sapply(spectra_in, function(x) paste0('\t', x)),
+        'Input files',
+        sapply(in_files, function(x) paste0('\t', x)),
+        'Output file(s)',
+        sapply(out_files, function(x) paste0('\t', x)),
+        'Spectra output names',
+        sapply(out_names, function(x) paste0('\t', x)),
+        sep='\n')
+    )
+  }
   invisible(bpmapply(
     rw_f,
     spectra_chunks,
@@ -279,6 +292,9 @@ change_format_chunks = function(spectra_in, spectra_out=NULL, outpath=NULL, read
                     add_ext = add_ext, BPPARAM=BPPARAM),
     BPPARAM = SerialParam(progressbar = verbose)
   ))
+  if(verbose) {
+    'DONE'
+  }
 }
 
 
@@ -298,7 +314,6 @@ rw_chunk_mzml = function(x, ch, in_files, out_files, out_names,
   if (add_ext) out_files = paste0(out_files, '.mzML')
 
   l = bplapply(in_files, read_f, BPPARAM=BPPARAM)
-
   header_template = initialize_mzml_header()
 
   header_df = bpmapply(
@@ -403,7 +418,7 @@ import_tsv = function(f, sep="\t") {
 #' @export
 #'
 import_table = function(f, sep = ''){
-  s = read.table(f, col.names = c('mz', 'intensity'))
+  s = as.matrix(read.table(f, col.names = c('mz', 'intensity')))
   return(s)
 }
 

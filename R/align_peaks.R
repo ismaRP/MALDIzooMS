@@ -49,7 +49,7 @@ int_ref_peaks = function(mpl, method=c('strict', 'relaxed'), minFreq=0.9,
   } else {
     ref_peaks = filterPeaks(
       binPeaks(mpl, method=method, tolerance=tolerance),
-      minFrequency=minFreq, labels=labels
+      minFrequency=minFreq, labels=labels, mergeWhitelists=TRUE
     )
   }
   m = get_bin_matrix(intensity_matrix(ref_peaks))
